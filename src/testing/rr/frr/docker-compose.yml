@@ -1,0 +1,61 @@
+---
+version: '3'
+
+networks:
+  test_net1:
+    enable_ipv6: false
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+       - subnet: 3.0.0.0/24
+         gateway: 3.0.0.1
+
+  test_net2:
+    enable_ipv6: false
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+       - subnet: 4.0.0.0/24
+         gateway: 4.0.0.1
+
+
+services:
+  frr_2:
+    image: "github/frr10:latest"
+    container_name: frr_2
+    privileged: true
+    volumes:
+      - ./frr2:/etc/frr:rw
+    command: "/usr/lib/frr/docker-start" # frr10: "/usr/lib/frr/docker-start", frr8: "/bin/bash /etc/frr/start_frr.sh"
+    networks:
+      test_net1:
+        ipv4_address: 3.0.0.2
+      test_net2:
+        ipv4_address: 4.0.0.2
+  
+  frr_3:
+    image: "github/frr10:latest"
+    container_name: frr_3
+    privileged: true
+    volumes:
+      - ./frr3:/etc/frr:rw
+    command: "/usr/lib/frr/docker-start" # frr10: "/usr/lib/frr/docker-start", frr8: "/bin/bash /etc/frr/start_frr.sh"
+    networks:
+      test_net2:
+        ipv4_address: 4.0.0.3
+      
+  frr_1:
+    image: "github/frr10:latest"
+    container_name: frr_1
+    privileged: true
+    volumes:
+      - ./frr1:/etc/frr:rw
+    command: "/usr/lib/frr/docker-start" # frr10: "/usr/lib/frr/docker-start", frr8: "/bin/bash /etc/frr/start_frr.sh"
+    networks:
+      test_net1:
+        ipv4_address: 3.0.0.3
+
+    
+
