@@ -217,10 +217,55 @@ def test_dname():
     # Synthesize the end-to-end model and generate test inputs.
     
     model = g.synthesize()
+    inputs = model.get_inputs(timeout_sec=5)
+    for input in inputs:
+        print(input)
+    
+    
+    
+def test_ipv4_match():
+    valid_domain_regex = "[a-z\\*](\\.[a-z*])*"
+    print("Valid domain regex:", valid_domain_regex)
+    domain_name = eywa.String(maxsize=5)
+    
+    domain_name_param = eywa.Parameter("domain_name", domain_name, "The domain name to validate.")
+    valid_domain_name = eywa.RegexModule(
+        "isValidDomainName",
+        valid_domain_regex,
+        domain_name_param
+    )
+    
+    query_dn = eywa.Parameter("domain_name", domain_name, "The domain name to check.")
+    ip_dn = eywa.Parameter("ipv4_domain_name", domain_name, "The A record domain name.")
+    dname_result = eywa.Parameter("result", eywa.Bool(), "If the A record matches the query domain name.")
+    is_valid = eywa.Parameter("is_valid", eywa.Bool(), "If the input domain names are valid.")
+    
+    is_matching_ipv4_record = eywa.Function(
+        "is_matching_a_record",
+        "a function that checks if an A DNS record matches a DNS domain name query. Include corner cases like wildcard matching and others. DO NOT USE C strtok function.",
+        [query_dn, ip_dn, dname_result]
+    )
+    
+    valid_inputs = eywa.Function(
+        "isValidInputs",
+        "a function that checks if the input domain names are valid according to DNS standards.",
+        [query_dn, ip_dn, is_valid]
+    )
+    
+    g = eywa.DependencyGraph()
+    g.CallEdge(valid_inputs, [valid_domain_name])
+    g.Pipe(is_matching_ipv4_record, valid_inputs)
+    model = g.Synthesize()
     print(model.implementation)
-    # inputs = model.get_inputs(timeout_sec=5)
-    # for input in inputs:
-    #     print(input)
+    with open('ipv4_match_code.c', 'w') as f:
+        f.write(model.implementation)
+    inputs = model.get_inputs(timeout_sec=5)
+    generated_inputs = []
+    for input in inputs:
+        generated_inputs.append(input)
+        print(input)
+    with open('ipv4_match_tests.json', 'w') as f:
+        json.dump(generated_inputs, f, indent=4)
     
 if __name__ == "__main__":
     # test_precondition_0()
@@ -235,5 +280,6 @@ if __name__ == "__main__":
     # test_prompt()
     # test_point()
     # test_regex_parser()
-    test_dname()
+    # test_dname()
+    test_ipv4_match()
     pass

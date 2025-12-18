@@ -49,6 +49,7 @@ class DependencyGraph:
         # adds a pipe from model2 to model1
         print("Adding pipe from", model2.name, "to", model1.name)
         self.filter_functions.append(model2)
+        self.add_node(model1)
         self.add_node(model2)
         print("Filter functions:", [f.name for f in self.filter_functions])
         
@@ -77,6 +78,8 @@ class DependencyGraph:
         sorted_order.reverse()
         return sorted_order
 
+    def Synthesize(self):
+        return self.synthesize()
         
     def synthesize(self, filter_functions: List = []):
         topo_order = self.topologicalSort()
@@ -102,7 +105,7 @@ class DependencyGraph:
                 main_oracle = oracle
             else:
                 oracle = run_wrapper_model(model, function_prototypes=dependencies)
-                print("Generated oracle for model:", model.name)
+                # print("Generated oracle for model:", model.name)
                 if self.node_to_model[node] in filter_functions:
                     filter_oracles.append(oracle)
             
@@ -115,8 +118,21 @@ class DependencyGraph:
                     dep_index = topo_order.index(dep)
                     oracle.implementation = replace_wrapper_code(oracle.implementation, oracles[dep_index].implementation, oracle.function_declares[j])
 
-        print("Number of filter functions:", len(filter_oracles))
+        # print("Number of filter functions:", len(filter_oracles))
         for filter_oracle in filter_oracles:
             main_oracle.implementation = insert_function_definition(main_oracle.implementation, filter_oracle.implementation)
+        
+        # Add regex implementation if any regex modules exist (only once)
+        has_regex_module = False
+        for node in topo_order:
+            model = self.node_to_model[node]
+            if type(model).__name__ == 'RegexModule':
+                has_regex_module = True
+                break
+        
+        if has_regex_module:
+            # Get the regex implementation from a temporary oracle
+            regex_impl = main_oracle._regex_impl()
+            main_oracle.implementation = insert_regex_impl(main_oracle.implementation, regex_impl)
         
         return main_oracle

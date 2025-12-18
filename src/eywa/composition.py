@@ -191,6 +191,29 @@ def replace_wrapper_code(wrapper_code, function_code, function_declare):
     
     return new_wrapper_code
 
+def insert_regex_impl(wrapper_code, regex_impl):
+    """
+    Inserts the regex implementation code after the last typedef struct or #include,
+    but before any function definitions.
+    """
+    lines = wrapper_code.split("\n")
+    
+    # Find the insertion point - after the last typedef or include
+    last_typedef_or_include_idx = -1
+    for i, line in enumerate(lines):
+        if line.startswith("typedef") or line.startswith("#include"):
+            last_typedef_or_include_idx = i
+    
+    # If we found a typedef or include, insert after it
+    if last_typedef_or_include_idx >= 0:
+        insertion_point = last_typedef_or_include_idx + 1
+        new_code = '\n'.join(lines[:insertion_point]) + '\n' + regex_impl + '\n' + '\n'.join(lines[insertion_point:])
+    else:
+        # Otherwise, just prepend it
+        new_code = regex_impl + '\n' + wrapper_code
+    
+    return new_code
+
 def run_wrapper_model(model, function_prototypes=None, filter_functions=None, partial=True, regex_impl=False):
     """
     Run a model and print the results.
@@ -205,185 +228,3 @@ def run_wrapper_model(model, function_prototypes=None, filter_functions=None, pa
         oracle.build_filter_and_test_model(filter_functions, temperature=0.6)
         
     return oracle
-
-
-# with open("prefixLengthToSubnetMask.txt", 'r') as f:
-#     prefixLengthtoSubnetMask = f.read()
-    
-# with open("isValidPrefixList.txt", 'r') as f:
-#     isValidPrefixList = f.read()
-    
-# with open("isValidRoute.txt", 'r') as f:
-#     isValidRoute = f.read()
-    
-# with open("isValidRouteMap.txt", 'r') as f:
-#     isValidRouteMap = f.read()
-    
-# pfxl_code = replace_wrapper_code(isValidPrefixList, prefixLengthtoSubnetMask, "uint32_t prefixLenToSubnetMask(uint32_t maskLength) {")
-# route_code = replace_wrapper_code(isValidRoute, prefixLengthtoSubnetMask, "uint32_t prefixLenToSubnetMask(uint32_t maskLength) {")
-# rmap_code = replace_wrapper_code(isValidRouteMap, route_code, "bool isValidRoute(Route route) {")
-# print(rmap_code)
-
-# rmap_code = replace_wrapper_code(rmap_code, pfxl_code, "bool isValidPrefixList(PrefixListEntry prefixList[2]) {")
-# print("\n")
-# print(rmap_code)
-
-# code = """#include <stdint.h>
-# #include <stdbool.h>
-# #include <string.h>
-# #include <stdlib.h>
-# #include <klee/klee.h>
-# #include <stdio.h>
-
-# typedef struct { uint32_t prefix; uint8_t prefixLength; uint32_t nextHop; uint32_t localPref; uint32_t community[1]; uint32_t med; } Route;
-
-# typedef struct { uint32_t prefix; uint8_t prefixLength; uint32_t le; uint32_t ge; bool any; bool permit; } PrefixListEntry;
-
-# typedef struct { PrefixListEntry matchPrefixList[2]; uint32_t matchLocalPref; uint32_t matchMed; uint32_t setLocalPref; uint32_t setMed; uint32_t setNextHop; uint32_t setCommunity; } RouteMapStanza;
-
-# typedef struct { RouteMapStanza stanza[1]; } RouteMap;
-
-
-
-
-
-# uint32_t prefixLenToSubnetMask(uint32_t maskLength) {
-#     if (maskLength > 32) {
-#         return 0;
-#     }
-#     return ~((1 << (32 - maskLength)) - 1);
-# }
-
-# bool isValidPrefixList(PrefixListEntry prefixList[2]) {
-#     if (memcmp(&prefixList[0], &prefixList[1], sizeof(PrefixListEntry)) == 0) {
-#         return false;
-#     }
-
-#     for (int i = 0; i < 2; i++) {
-#         if (prefixList[i].any) {
-#             if (prefixList[i].prefix != 0 || prefixList[i].prefixLength != 0 || prefixList[i].ge != 0 || prefixList[i].le != 32) {
-#                 return false;
-#             }
-#         } else {
-#             if (prefixList[i].prefix < 1671377732 || prefixList[i].prefix > 1679687938) {
-#                 return false;
-#             }
-
-#             if (prefixList[i].prefixLength > 32 || prefixList[i].le > 32 || prefixList[i].ge > 32) {
-#                 return false;
-#             }
-
-#             if (prefixList[i].prefixLength > prefixList[i].ge || prefixList[i].ge > prefixList[i].le) {
-#                 return false;
-#             }
-
-#             uint32_t subnetMask = prefixLenToSubnetMask(prefixList[i].prefixLength);
-#             if ((prefixList[i].prefix & subnetMask) == 0) {
-#                 return false;
-#             }
-#         }
-#     }
-
-#     return true;
-# }
-
-# bool isValidRoute(Route route);
-
-# bool isValidRouteRmap(Route route, RouteMap routeMap) {
-#     if (!isValidRoute(route)) {
-#         return false;
-#     }
-
-#     for (int i = 0; i < 2; i++) {
-#         if (!isValidPrefixList(routeMap.stanza[0].matchPrefixList)) {
-#             return false;
-#         }
-#     }
-
-#     if (routeMap.stanza[0].matchLocalPref < 100 || routeMap.stanza[0].matchLocalPref > 200) {
-#         return false;
-#     }
-
-#     if (routeMap.stanza[0].matchMed < 20 || routeMap.stanza[0].matchMed > 50) {
-#         return false;
-#     }
-
-#     if (routeMap.stanza[0].setLocalPref < 300 || routeMap.stanza[0].setLocalPref > 400) {
-#         return false;
-#     }
-
-#     if (routeMap.stanza[0].setMed < 70 || routeMap.stanza[0].setMed > 90) {
-#         return false;
-#     }
-
-#     if (routeMap.stanza[0].setNextHop < 1671377732 || routeMap.stanza[0].setNextHop > 1679687938) {
-#         return false;
-#     }
-
-#     if (routeMap.stanza[0].setCommunity < 10 || routeMap.stanza[0].setCommunity > 20) {
-#         return false;
-#     }
-
-#     return true;
-# }"""
-
-# code2 = """#include <stdint.h>
-# #include <stdbool.h>
-# #include <string.h>
-# #include <stdlib.h>
-# #include <klee/klee.h>
-# #include <stdio.h>
-
-# typedef struct { uint32_t prefix; uint8_t prefixLength; uint32_t nextHop; uint32_t localPref; uint32_t community[1]; uint32_t med; } Route;
-
-
-
-# uint32_t prefixLenToSubnetMask(uint32_t maskLength) {
-#     if (maskLength > 32) {
-#         return 0;
-#     }
-#     return ~((1 << (32 - maskLength)) - 1);
-# }
-
-# bool isValidRoute(Route route) {
-#     uint32_t subnetMask = prefixLenToSubnetMask(route.prefixLength);
-#     uint32_t ipaddr = route.prefix;
-#     uint32_t localPref = route.localPref;
-#     uint32_t med = route.med;
-#     uint32_t nextHop = route.nextHop;
-#     uint32_t community = route.community[0];
-
-#     if (ipaddr < 1671377732 || ipaddr > 1679687938) {
-#         return false;
-#     }
-
-#     if (route.prefixLength > 32) {
-#         return false;
-#     }
-
-#     if ((ipaddr & subnetMask) == 0) {
-#         return false;
-#     }
-
-#     if (localPref < 100 || localPref > 200) {
-#         return false;
-#     }
-
-#     if (med < 20 || med > 50) {
-#         return false;
-#     }
-
-#     if (nextHop < 1671377732 || nextHop > 1679687938) {
-#         return false;
-#     }
-
-#     if (community != 0) {
-#         return false;
-#     }
-
-#     return true;
-# }"""
-
-# final_code = replace_wrapper_code(code, code2, "bool isValidRoute(Route route) {")
-
-# print(final_code)
