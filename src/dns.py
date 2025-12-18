@@ -1,7 +1,7 @@
 import json
 import pathlib
 from typing import Generator, List, Tuple
-
+import eywa
 import eywa.ast as ast
 import eywa.oracles as oracles
 import eywa.regex as re
@@ -9,7 +9,30 @@ import eywa.run as run
 
 SIGCOMM = False
 
+def build_regex_module(maxsize=5):
+    valid_dn_re = "[a-z\\*](\\.[a-z*])*"
+    domain_name = eywa.String(maxsize=maxsize)
+    domain_name_param = eywa.Parameter("domain_name", domain_name,"The domain name to validate")
+    is_valid_domain_name = eywa.RegexModule(
+        "is_valid_domain_name",
+        valid_dn_re,
+        domain_name_param
+    )
+    
+    return is_valid_domain_name
 
+def build_is_valid_module(domain_name_param, maxsize=5):
+    domain_name = eywa.String(maxsize=maxsize)
+    query_dn = eywa.Parameter("domain_name", domain_name,description="The domain name to check")
+    is_valid = ast.Parameter("is_valid", ast.Bool(), description="whether the DNS domain name is valid according to DNS standards.")
+    valid_inputs = eywa.Function(
+        "isValidInputs",
+        "a function that checks if the input domain names are valid according to DNS standards.",
+        [query_dn, domain_name_param, is_valid]
+    )
+    return valid_inputs
+     
+    
 def generate_zone_query_pair_inputs(inputs: List[Tuple[List[dict], str]], output_directory: str = "Tests") -> None:
     """
     Generate inputs for a test function that takes a zone and query as input.
@@ -49,9 +72,7 @@ def generate_zone_query_inputs_from_zone(zone_input: List[Tuple[List[dict], str]
 
 def cname_match_check():
     domain_name = ast.String(5)
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
+    
     query_dn = ast.Parameter("domain_name", domain_name,description="The domain name to check")
     cname_dn = ast.Parameter("cname_domain_name", domain_name,description="The CNAME record domain name")
     cname_result = ast.Parameter("result", ast.Bool(), description="whether the DNS domain name query matches the CNAME record.")
@@ -70,14 +91,19 @@ def cname_match_check():
         "is_matching_cname_record",
         "a function that checks if a CNAME DNS record matches a DNS domain name query.\n"
         "Includes cases like wildcards with '*' labels. DO NOT USE C strtok function.",
-        [query_dn, cname_dn, cname_result],
-        precondition=(query_dn.matches(valid_dn_re) &
-                      cname_dn.matches(valid_dn_re)),
+        [query_dn, cname_dn, cname_result]
     )
-
+    
+    is_valid_domain_name = build_regex_module(maxsize=5)
+    is_valid_inputs = build_is_valid_module(cname_dn, maxsize=5)
+    
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_inputs, [is_valid_domain_name])
+    g.Pipe(is_matching_cname_record, is_valid_inputs)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//CNAME")
-        inputs = run(is_matching_cname_record, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -89,7 +115,7 @@ def cname_match_check():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(is_matching_cname_record, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -101,13 +127,8 @@ def cname_match_check():
 def dname_match_check():
     domain_name = ast.String(5)
 
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
-    query_dn = ast.Parameter("domain_name", domain_name,
-                             description="The domain name to check")
-    dname_dn = ast.Parameter("dname_domain_name", domain_name,
-                             description="The DNAME record domain name")
+    query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
+    dname_dn = ast.Parameter("dname_domain_name", domain_name, description="The DNAME record domain name")
     dname_result = ast.Parameter("result", ast.Bool(
     ), description="whether the DNS domain name query matches the DNAME record.")
 
@@ -125,12 +146,18 @@ def dname_match_check():
         "is_matching_dname_record",
         "a function that checks if a DNAME (provides redirection from a part of the DNS name tree to another part of the DNS name tree) DNS record matches a DNS domain name query. DO NOT USE C strrev function.",
         [query_dn, dname_dn, dname_result],
-        precondition=(query_dn.matches(valid_dn_re) &
-                      dname_dn.matches(valid_dn_re)),
     )
+    
+    is_valid_domain_name = build_regex_module(maxsize=5)
+    is_valid_inputs = build_is_valid_module(dname_dn, maxsize=5)
+    
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_inputs, [is_valid_domain_name])
+    g.Pipe(is_matching_dname_record, is_valid_inputs)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//DNAME")
-        inputs = run(is_matching_dname_record, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -142,7 +169,7 @@ def dname_match_check():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(is_matching_dname_record, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -154,13 +181,8 @@ def dname_match_check():
 def ipv4_match_check():
     domain_name = ast.String(5)
 
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
-    query_dn = ast.Parameter("domain_name", domain_name,
-                             description="The domain name to check")
-    ip_dn = ast.Parameter("ipv4_domain_name", domain_name,
-                          description="The A record domain name")
+    query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
+    ip_dn = ast.Parameter("ipv4_domain_name", domain_name, description="The A record domain name")
     dname_result = ast.Parameter("result", ast.Bool(
     ), description="whether the DNS domain name query matches the A record.")
 
@@ -177,13 +199,19 @@ def ipv4_match_check():
     is_matching_ipv4_record = ast.Function(
         "is_matching_a_record",
         "a function that checks if an A DNS record matches a DNS domain name query. Include corner cases like wildcard matching and others. DO NOT USE C strtok function.",
-        [query_dn, ip_dn, dname_result],
-        precondition=(query_dn.matches(valid_dn_re) &
-                      ip_dn.matches(valid_dn_re)),
+        [query_dn, ip_dn, dname_result]
     )
+    
+    is_valid_domain_name = build_regex_module(maxsize=5)
+    is_valid_inputs = build_is_valid_module(ip_dn, maxsize=5)
+    
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_inputs, [is_valid_domain_name])
+    g.Pipe(is_matching_ipv4_record, is_valid_inputs)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//IPv4")
-        inputs = run(is_matching_ipv4_record, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir,  timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -195,7 +223,7 @@ def ipv4_match_check():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(is_matching_ipv4_record, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -231,9 +259,12 @@ def ipv4_match_check_no_precondition():
          First write a function that checks if a DNS domain name is valid and only if they are valid then check if they match.",
         [query_dn, ip_dn, dname_result]
     )
+    
+    g = eywa.DependencyGraph()
+    g.Node(is_matching_ipv4_record)
 
     output_dir = "IPv4_full"
-    inputs = run(is_matching_ipv4_record, k=3, debug=output_dir)
+    inputs = run(g, k=3, debug=output_dir)
     query_zone_tuples = []
     for input in inputs:
         query_zone_tuples.append(create_ipv4_zone(input))
@@ -252,9 +283,12 @@ def validate_domain_name():
         "Include as many checks as possible including checks for wildcard domain names.",
         [dn, result]
     )
+    
+    g = eywa.DependencyGraph()
+    g.Node(validate_domain_name)
 
     output_dir = "ValidateDomainName"
-    inputs = run(validate_domain_name, k=10, debug=output_dir)
+    inputs = run(g, k=10, debug=output_dir)
 
     test_dir = pathlib.Path(output_dir)
     test_dir.mkdir(exist_ok=True)
@@ -279,14 +313,9 @@ def validate_domain_name():
 
 def wildcard_match_check():
     domain_name = ast.String(5)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
-    query_dn = ast.Parameter("domain_name", domain_name,
-                             description="The domain name to check")
-    wildcard_dn = ast.Parameter("wildcard_domain_name", domain_name,
-                                description="The wildcard record domain name")
+    
+    query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
+    wildcard_dn = ast.Parameter("wildcard_domain_name", domain_name, description="The wildcard record domain name")
     wildcard_result = ast.Parameter("result", ast.Bool(
     ), description="whether the DNS domain name query matches the wildcard record.")
 
@@ -303,13 +332,18 @@ def wildcard_match_check():
     is_matching_wildcard_record = ast.Function(
         "is_matching_wildcard_record",
         "a function that checks if a DNS wildcard record matches a DNS domain name query. DO NOT USE C strrev function.",
-        [query_dn, wildcard_dn, wildcard_result],
-        precondition=(query_dn.matches(valid_dn_re) &
-                      wildcard_dn.matches(valid_dn_re)),
+        [query_dn, wildcard_dn, wildcard_result]
     )
+    
+    is_valid_domain_name = build_regex_module(maxsize=5)
+    is_valid_inputs = build_is_valid_module(wildcard_dn, maxsize=5)
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_inputs, [is_valid_domain_name])
+    g.Pipe(is_matching_wildcard_record, is_valid_inputs)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//Wildcard")
-        inputs = run(is_matching_wildcard_record, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -321,7 +355,7 @@ def wildcard_match_check():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(is_matching_wildcard_record, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -850,11 +884,11 @@ if __name__ == "__main__":
     # dname_match_check()
     # ipv4_match_check()
     # ipv4_match_check_no_precondition()
-    # wildcard_match_check()
+    wildcard_match_check()
     # valid_zone_check()
     # full_query_lookup()
     # loop_count()
     # return_code_lookup()
     # authoritative_lookup()
-    zonecut()
+    # zonecut()
     pass

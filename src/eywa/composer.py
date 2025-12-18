@@ -78,10 +78,10 @@ class DependencyGraph:
         sorted_order.reverse()
         return sorted_order
 
-    def Synthesize(self):
-        return self.synthesize()
+    def Synthesize(self, temperature: float = 0.6):
+        return self.synthesize(temperature=temperature)
         
-    def synthesize(self, filter_functions: List = []):
+    def synthesize(self, filter_functions: List = [], temperature: float = 0.6):
         topo_order = self.topologicalSort()
         print(self.graph)
         print(self.dependencies)
@@ -99,12 +99,12 @@ class DependencyGraph:
     
             if len(self.graph[node]) == 0 and self.node_to_model[node] not in filter_functions:
                 if len(filter_functions) == 0:
-                    oracle = run_wrapper_model(model, function_prototypes=dependencies, partial=False)
+                    oracle = run_wrapper_model(model, function_prototypes=dependencies, partial=False, temperature=temperature)
                 else:
-                    oracle = run_wrapper_model(model, function_prototypes=dependencies, filter_functions=filter_functions, partial=False)
+                    oracle = run_wrapper_model(model, function_prototypes=dependencies, filter_functions=filter_functions, partial=False, temperature=temperature)
                 main_oracle = oracle
             else:
-                oracle = run_wrapper_model(model, function_prototypes=dependencies)
+                oracle = run_wrapper_model(model, function_prototypes=dependencies, temperature=temperature)
                 # print("Generated oracle for model:", model.name)
                 if self.node_to_model[node] in filter_functions:
                     filter_oracles.append(oracle)

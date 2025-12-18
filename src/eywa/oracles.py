@@ -21,7 +21,7 @@ class KleeOracle:
     inputs for a user's function.
     """
 
-    def __init__(self, function: Function, function_prototypes: List[Function]=None, constants: Dict[str, Const]=None):
+    def __init__(self, function: Function, function_prototypes: List[Function]=None, constants: Dict[str, Const]=None, temperature: float = 0.6):
         """
         Initializes the oracle with the given function.
         """
@@ -38,6 +38,7 @@ class KleeOracle:
         self.has_valid_input_param = False
         self.function_declares = []
         self.constants = constants
+        self.temperature = temperature
 
     def build_model(self, temperature: float = 0.0) -> None:
         """
@@ -78,14 +79,14 @@ class KleeOracle:
         print(colored("System prompt:", 'blue'), self.system_prompt())
         user_prompt = self.user_prompt()
         gpt4_response = gpt4.query_openai_endpoint(
-            user_prompt, temperature=temperature, system_prompt=self.system_prompt())
+            user_prompt, temperature=self.temperature, system_prompt=self.system_prompt())
         # gpt4_response = ""
         print(colored("User prompt:", 'red', attrs=['bold']), user_prompt, "\n\n")
         self.implementation = gpt4_response
         print(colored("GPT:", 'green', attrs=['bold']), self.implementation)
 
     
-    def build_filter_and_test_model(self, other: List[str] = None, temperature: float = 0.0):
+    def build_filter_and_test_model(self, other: List[str] = None):
         """
         Builds the model by filling in the implementation field with a
         C program that implements the user's function. It also provides
@@ -96,7 +97,7 @@ class KleeOracle:
         user_prompt = self.user_prompt()
         print(colored("System prompt:", 'blue'), self.system_prompt())
         gpt4_response = gpt4.query_openai_endpoint(
-            user_prompt, temperature=temperature, system_prompt=self.system_prompt()
+            user_prompt, temperature=self.temperature, system_prompt=self.system_prompt()
         )
         # gpt4_response = ""
         if other is not None:

@@ -214,17 +214,17 @@ def insert_regex_impl(wrapper_code, regex_impl):
     
     return new_code
 
-def run_wrapper_model(model, function_prototypes=None, filter_functions=None, partial=True, regex_impl=False):
+def run_wrapper_model(model, function_prototypes=None, filter_functions=None, partial=True, temperature=0.6):
     """
     Run a model and print the results.
     """
-    oracle = oracles.KleeOracle(model, function_prototypes)
+    oracle = oracles.KleeOracle(model, function_prototypes, temperature=temperature)
     if partial:
         if type(model).__name__ == 'RegexModule':
             oracle.build_eywa_regex_model()
         else:
             oracle.build_compositional_model()
     else:
-        oracle.build_filter_and_test_model(filter_functions, temperature=0.6)
+        oracle.build_filter_and_test_model(filter_functions)
         
     return oracle

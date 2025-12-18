@@ -4,7 +4,7 @@ import time
 import traceback
 from collections import defaultdict
 from typing import Union
-
+from eywa.composer import DependencyGraph
 import eywa.ast as ast
 import eywa.oracles as oracles
 
@@ -35,7 +35,7 @@ def recreate_structure(hashable):
         return hashable
 
 
-def run(model: ast.Function, k: int = 1, ratelimit_sec=10, debug: Union[None, str] = None, timeout_sec: int = 300, temperature_value=0.6):
+def run(graph: DependencyGraph, k: int = 1, ratelimit_sec=10, debug: Union[None, str] = None, timeout_sec: int = 300, temperature_value=0.6):
     """
     Run a model to produce test results.
     """
@@ -49,19 +49,21 @@ def run(model: ast.Function, k: int = 1, ratelimit_sec=10, debug: Union[None, st
         if i > 0:
             time.sleep(ratelimit_sec)
         start_time = time.time()
-        oracle = oracles.KleeOracle(model)
+        # oracle = oracles.KleeOracle(model)
         try:
-            oracle.build_model(temperature=temperature_values[i])
+            # oracle.build_model(temperature=temperature_values[i])
+            model = graph.Synthesize(temperature=temperature_values[i])
         except Exception as e:
             print(
                 f"Error building model with temperature {temperature_values[i]}: {e}")
             time.sleep(120)
             start_time = time.time()
-            oracle.build_model(temperature=temperature_values[i])
+            # oracle.build_model(temperature=temperature_values[i])
+            model = graph.Synthesize(temperature=temperature_values[i])
         stats[i]["GPT_Time"] = time.time() - start_time
-        system_prompt = oracle.system_prompt()
-        user_prompt = oracle.user_prompt()
-        implementation = oracle.implementation
+        system_prompt = model.system_prompt()
+        user_prompt = model.user_prompt()
+        implementation = model.implementation
         if debug is not None:
             if i == 0:
                 with open(os.path.join(debug, f"system_prompt.txt"), "w") as f:
@@ -72,7 +74,7 @@ def run(model: ast.Function, k: int = 1, ratelimit_sec=10, debug: Union[None, st
                 f.write(implementation)
         try:
             start_time = time.time()
-            tests = oracle.get_inputs(timeout_sec)
+            tests = model.get_inputs(timeout_sec)
             stats[i]["Klee_Time"] = time.time() - start_time
             strings = []
             unique_testcases_i = set()
