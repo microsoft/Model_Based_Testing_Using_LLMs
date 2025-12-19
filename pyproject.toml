@@ -1,0 +1,146 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eywa"
+version = "0.1.0"
+description = "Eywa: Automating Model-based Testing using LLMs"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Microsoft"}
+]
+keywords = [
+    "model-based-testing",
+    "llm",
+    "testing",
+    "dns",
+    "bgp",
+    "smtp",
+    "openai"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "aiosmtpd>=1.4.6",
+    "annotated-types>=0.7.0",
+    "anyio>=4.12.0",
+    "atpublic>=7.0.0",
+    "attrs>=25.4.0",
+    "certifi>=2025.11.12",
+    "charset-normalizer>=3.4.4",
+    "deepdiff>=8.6.1",
+    "distro>=1.9.0",
+    "docker>=7.1.0",
+    "h11>=0.16.0",
+    "httpcore>=1.0.9",
+    "httpx>=0.28.1",
+    "idna>=3.11",
+    "jiter>=0.12.0",
+    "numpy>=2.3.5",
+    "openai>=2.14.0",
+    "orderly-set>=5.5.0",
+    "pandas>=2.3.3",
+    "pybatfish>=2025.7.7.2423",
+    "pydantic>=2.12.5",
+    "pydantic_core>=2.41.5",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2025.2",
+    "PyYAML>=6.0.3",
+    "regex>=2025.11.3",
+    "requests>=2.32.5",
+    "requests-toolbelt>=1.0.0",
+    "simplejson>=3.20.2",
+    "six>=1.17.0",
+    "sniffio>=1.3.1",
+    "termcolor>=3.2.0",
+    "tqdm>=4.67.1",
+    "typing-inspection>=0.4.2",
+    "typing_extensions>=4.15.0",
+    "tzdata>=2025.3",
+    "urllib3>=2.6.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/microsoft/Model_Based_Testing_Using_LLMs"
+Repository = "https://github.com/microsoft/Model_Based_Testing_Using_LLMs"
+Issues = "https://github.com/microsoft/Model_Based_Testing_Using_LLMs/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

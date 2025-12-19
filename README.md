@@ -8,7 +8,7 @@ This repsitory contains the code for our paper **Eywa: Automating Model-based Te
 
 First clone the repository onto your local machine.
 ```bash
-$ git clone https://github.com/microsoft/Eywa.git
+$ git clone https://github.com/microsoft/Model_Based_Testing_Using_LLMs.git
 ```
 
 We recommend setting up a virtual environment first.
