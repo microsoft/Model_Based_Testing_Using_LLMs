@@ -13,7 +13,7 @@ $ git clone https://github.com/microsoft/Eywa.git
 
 We recommend setting up a virtual environment first.
 ```bash
-$ cd eywa
+$ cd Eywa
 $ python3 -m venv eywa_env
 $ source eywa_env/bin/activate
 ```

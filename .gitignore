@@ -3,3 +3,5 @@
 *.json
 *.pyc
 *.c
+*.ipynb
+__pycache__/
