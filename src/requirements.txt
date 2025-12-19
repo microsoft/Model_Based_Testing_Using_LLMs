@@ -1,0 +1,9 @@
+aiosmtpd==1.4.6
+docker_py==1.10.6
+openai==2.13.0
+pandas==2.3.3
+pybatfish==2025.7.7.2423
+PyYAML==6.0.2
+PyYAML==6.0.3
+termcolor==3.2.0
+tqdm==4.67.1
