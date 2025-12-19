@@ -5,7 +5,9 @@ import eywa.oracles as oracles
 from eywa.composition import run_wrapper_model
 from termcolor import colored
 import json
-
+import docker
+import openai
+import pandas as pd
 
 def run_model(model):
     """
@@ -284,7 +286,10 @@ if __name__ == "__main__":
     # test_function_return()
     # test_prompt()
     # test_point()
-    test_regex_parser()
+    # test_regex_parser()
     # test_dname()
     # test_ipv4_match()
+    print(docker.__version__)
+    print(openai.__version__)
+    print(pd.__version__)
     pass
