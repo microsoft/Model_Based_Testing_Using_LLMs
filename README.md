@@ -32,5 +32,12 @@ $ echo "sk..." > openai_key.txt
 
 To generate test inputs for DNS, select any one of the options provided below as appropriate:
 ```bash
-$ python3 dns.py --nsdi -m [ cname | dname | wildcard | full_lookup | rcode | authoritative | loop_count ]
+$ python3 dns.py --nsdi -m [ cname | dname | ipv4 | wildcard | full_lookup | rcode | authoritative | loop_count ]
 ```
+
+To generate graphs on the number of runs versus the number of unique tests, as provided in the appendix of the paper:
+```bash
+$ python3 dns.py -m cname -r 2
+$ python3 plot_graphs.py --model cname --runs 2
+```
+The available options for models are **cname**, **dname**,**ipv4** and **wildcard**.

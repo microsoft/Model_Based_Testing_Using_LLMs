@@ -71,7 +71,7 @@ def generate_zone_query_inputs_from_zone(zone_input: List[Tuple[List[dict], str]
             f.write(input[0])
 
 
-def cname_match_check():
+def cname_match_check(runs=12):
     domain_name = ast.String(5)
     
     query_dn = ast.Parameter("domain_name", domain_name,description="The domain name to check")
@@ -82,6 +82,7 @@ def cname_match_check():
         query_name, zone_record_name = input[0], input[1]
         zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
         zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        if zone_record_name == "": zone_record_name = "b"
         zone_file += f'{zone_record_name}.test.\t500\tIN\tCNAME\tsome.domain.\n'
         queries = []
         queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
@@ -112,11 +113,11 @@ def cname_match_check():
         generate_zone_query_pair_inputs(query_zone_tuples, (output_dir))
     else:
         output_dir = pathlib.Path("CNAME")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -125,7 +126,7 @@ def cname_match_check():
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def dname_match_check():
+def dname_match_check(runs=12):
     domain_name = ast.String(5)
 
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -137,6 +138,7 @@ def dname_match_check():
         query_name, zone_record_name = input[0], input[1]
         zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
         zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        if zone_record_name == "": zone_record_name = "b"
         zone_file += f'{zone_record_name}.test.\t500\tIN\tDNAME\tsome.domain.\n'
         queries = []
         queries.append({"Name": query_name + ".test.", "Type": "DNAME"})
@@ -166,11 +168,11 @@ def dname_match_check():
         generate_zone_query_pair_inputs(query_zone_tuples, (output_dir))
     else:
         output_dir = pathlib.Path("DNAME")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -179,7 +181,7 @@ def dname_match_check():
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def ipv4_match_check():
+def ipv4_match_check(runs=12):
     domain_name = ast.String(5)
 
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -191,6 +193,7 @@ def ipv4_match_check():
         query_name, zone_record_name = input[0], input[1]
         zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
         zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        if zone_record_name == "": zone_record_name = "b"
         zone_file += f'{zone_record_name}.test.\t500\tIN\tA\t1.1.1.1\n'
         queries = []
         queries.append({"Name": query_name + ".test.", "Type": "A"})
@@ -220,11 +223,11 @@ def ipv4_match_check():
         generate_zone_query_pair_inputs(query_zone_tuples, (output_dir))
     else:
         output_dir = pathlib.Path("IPv4")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -312,7 +315,7 @@ def validate_domain_name():
             f.write(json.dumps(queries))
 
 
-def wildcard_match_check():
+def wildcard_match_check(runs=12):
     domain_name = ast.String(5)
     
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -324,6 +327,7 @@ def wildcard_match_check():
         query_name, zone_record_name = input[0], input[1]
         zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
         zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        if zone_record_name == "": zone_record_name = "b"
         zone_file += f'{zone_record_name}.test.\t500\tIN\tA\t1.1.1.1\n'
         queries = []
         queries.append({"Name": query_name + ".test.", "Type": "A"})
@@ -352,11 +356,11 @@ def wildcard_match_check():
         generate_zone_query_pair_inputs(query_zone_tuples, (output_dir))
     else:
         output_dir = pathlib.Path("Wildcard")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -561,7 +565,7 @@ def full_query_lookup():
         generate_zone_query_pair_inputs(query_zone_tuples, output_dir)
     else:
         output_dir = pathlib.Path("FullLookup")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
@@ -659,7 +663,7 @@ def return_code_lookup():
         generate_zone_query_pair_inputs(query_zone_tuples, output_dir)
     else:
         output_dir = pathlib.Path("RCODE")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
@@ -757,7 +761,7 @@ def authoritative_lookup():
         generate_zone_query_pair_inputs(query_zone_tuples, output_dir)
     else:
         output_dir = pathlib.Path("Authoritative")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
@@ -857,7 +861,7 @@ def loop_count():
         generate_zone_query_pair_inputs(query_zone_tuples, output_dir)
     else:
         output_dir = pathlib.Path("LoopCount")
-        for i in range(0, 10):
+        for i in range(0, 1):
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
@@ -968,18 +972,22 @@ if __name__ == "__main__":
     # zonecut()
     parser = ArgumentParser()
     parser.add_argument("-m", "--module", type=str, required=True,
-                        choices=["cname", "dname", "wildcard", "full_lookup", "loop_count", "rcode", "authoritative"],
-                        help="The DNS module to generate inputs for.")
+                        choices=["cname", "dname", "wildcard", "ipv4", "full_lookup", "loop_count", "rcode", "authoritative"],
+                        help="The DNS module to generate inputs for.", default="cname")
     parser.add_argument("-n", "--nsdi", action="store_true",
-                        help="Generate NSDI inputs.", default=False)    
+                        help="Generate NSDI inputs.", default=False)
+    parser.add_argument("-r", "--runs", type=int, required=True,
+                        help="Number of runs to generate inputs for.", default=12)
     args = parser.parse_args()
     SIGCOMM = args.nsdi
     if args.module == "cname":
-        cname_match_check()
+        cname_match_check(args.runs)
     elif args.module == "dname":
-        dname_match_check()
+        dname_match_check(args.runs)
     elif args.module == "wildcard":
-        wildcard_match_check()
+        wildcard_match_check(args.runs)
+    elif args.module == "ipv4":
+        ipv4_match_check(args.runs)
     elif args.module == "full_lookup":
         full_query_lookup()
     elif args.module == "loop_count":
