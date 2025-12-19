@@ -8,7 +8,6 @@ from eywa.composer import DependencyGraph
 import eywa.ast as ast
 import eywa.oracles as oracles
 
-
 def generate_temperature_values(k):
     if k == 1:
         return [0]

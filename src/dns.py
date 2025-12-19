@@ -4,13 +4,14 @@ from typing import Generator, List, Tuple
 import eywa
 import eywa.ast as ast
 import eywa.oracles as oracles
-import eywa.regex as re
+import regex as re
 import eywa.run as run
+from argparse import ArgumentParser
 
 SIGCOMM = False
 
 def build_regex_module(maxsize=5):
-    valid_dn_re = "[a-z\\*](\\.[a-z*])*"
+    valid_dn_re = "[a-z\\*](\\.[a-z\\*])*"
     domain_name = eywa.String(maxsize=maxsize)
     domain_name_param = eywa.Parameter("domain_name", domain_name,"The domain name to validate")
     is_valid_domain_name = eywa.RegexModule(
@@ -403,6 +404,8 @@ def create_zone(input: List) -> Tuple[List[dict], str]:
     zone_origin = ""
     for record in input[0]:
         record_name = record["domain_name"]
+        if not re.match("[a-z\\*](\\.[a-z\\*])*", record_name):
+            record_name = "b"
         rtype = record["record_type"]
         rdata = record["rdata"]
         if rtype == "A":
@@ -445,9 +448,6 @@ def create_zone(input: List) -> Tuple[List[dict], str]:
 def valid_zone_check():
     domain_name = ast.String(3)
 
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
     record = ast.Struct("ResourceRecord", domain_name=domain_name,
@@ -465,12 +465,23 @@ def valid_zone_check():
         "Include as many important semantic condition checks as possible that must hold for a zone file to be considered valid and well-formed. "
         "Consider different record types and their semantics. ",
         [zone_parameter, zone_result],
-        precondition=zone_parameter.forall(
-            lambda r: r.get_field("domain_name").matches(valid_dn_re)),
     )
+    
+    valid_domain_names_result = ast.Parameter("valid_domain_names_result", ast.Bool(), description="whether all domain names in the zone are valid.")
+    is_valid_domain_name = build_regex_module(maxsize=3)
+    
+    all_valid_domain_names = ast.Function(
+        "all_valid_domain_names",
+        "a function that checks if all domain names in the zone are valid according to DNS standards.",
+        [zone_parameter, valid_domain_names_result]
+    )
+    
+    g = eywa.DependencyGraph()
+    g.CallEdge(all_valid_domain_names, [is_valid_domain_name])
+    g.Pipe(is_valid_zone, all_valid_domain_names)
 
     output_dir = "ValidZone"
-    inputs = run(is_valid_zone, k=10, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=10, debug=output_dir, timeout_sec=300)
     query_zone_tuples = []
     for input in inputs:
         query_zone_tuples.append(create_zone(input))
@@ -479,9 +490,6 @@ def valid_zone_check():
 
 def full_query_lookup():
     domain_name = ast.String(3)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
 
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
@@ -508,15 +516,35 @@ def full_query_lookup():
         "The input query has a domain name and record type. The function should handle CNAME, DNAME, NS, A, AAAA, TXT, SOA, and wildcard cases among other types. "
         "It should return the DNS response. ",
         [zone_parameter, query_parameter, response_parameter],
-        precondition=zone_parameter.forall(
-            lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            (r.get_field("domain_name").matches(valid_dn_re)))
-        & query_parameter.get_field("domain_name").matches(valid_dn_re),
+        # precondition=zone_parameter.forall(
+        #     lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     (r.get_field("domain_name").matches(valid_dn_re)))
+        # & query_parameter.get_field("domain_name").matches(valid_dn_re),
     )
+    
+    valid_zone_query = ast.Parameter("valid_zone_query", ast.Bool(), description="whether the zone and query are both valid.")
+    
+    is_valid_zone_query = ast.Function(
+        "is_valid_zone_query",
+        "a function that validates a DNS zone file and query according to the DNS RFC semantics. "
+        "The following conditions must hold for a zone file to be considered valid and well-formed:"
+        "1. If the resource record is of type CNAME, then the RDATA must be a valid domain name."
+        "2. If the resource record is of type DNAME, then the RDATA must be a valid domain name."
+        "3. All domain names in the zone must be valid according to DNS standards."
+        "4. The query domain name must be valid according to DNS standards.",
+        [zone_parameter, query_parameter, valid_zone_query]
+    )
+    
+    is_valid_domain_name = build_regex_module(maxsize=3)
+
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
+    g.Pipe(dns_query_lookup, is_valid_zone_query)
+
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//FullLookup")
-        inputs = run(dns_query_lookup, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -537,10 +565,11 @@ def full_query_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(dns_query_lookup, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
+                    # print("Input:", input)
                     zone_file, zone_origin = create_zone(input)
                     queries = []
                     query_name = input[1]["domain_name"]
@@ -552,15 +581,13 @@ def full_query_lookup():
                         queries.append(
                             {"Name": query_name, "Type": query_type})
                     query_zone_tuples.append((queries, zone_file))
+                # print("Number of query_zone_tuples:", len(query_zone_tuples))
                 generate_zone_query_pair_inputs(
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
 def return_code_lookup():
     domain_name = ast.String(3)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
 
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
@@ -587,15 +614,35 @@ def return_code_lookup():
         "The input query has a domain name and record type. The function should handle CNAME, DNAME, NS, A, AAAA, TXT, SOA, and wildcard cases among other types. "
         "It should return the RCODE of the DNS response that a DNS nameserver will respond with to the query using this zone file as a shortened two-letter code. ",
         [zone_parameter, query_parameter, response_parameter],
-        precondition=zone_parameter.forall(
-            lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            (r.get_field("domain_name").matches(valid_dn_re)))
-        & query_parameter.get_field("domain_name").matches(valid_dn_re),
+        # precondition=zone_parameter.forall(
+        #     lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     (r.get_field("domain_name").matches(valid_dn_re)))
+        # & query_parameter.get_field("domain_name").matches(valid_dn_re),
     )
+    
+    valid_zone_query = ast.Parameter("valid_zone_query", ast.Bool(), description="whether the zone and query are both valid.")
+    
+    is_valid_zone_query = ast.Function(
+        "is_valid_zone_query",
+        "a function that validates a DNS zone file and query according to the DNS RFC semantics. "
+        "The following conditions must hold for a zone file to be considered valid and well-formed:"
+        "1. If the resource record is of type CNAME, then the RDATA must be a valid domain name."
+        "2. If the resource record is of type DNAME, then the RDATA must be a valid domain name."
+        "3. All domain names in the zone must be valid according to DNS standards."
+        "4. The query domain name must be valid according to DNS standards.",
+        [zone_parameter, query_parameter, valid_zone_query]
+    )
+    
+    is_valid_domain_name = build_regex_module(maxsize=3)
+
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
+    g.Pipe(dns_query_lookup_rcode, is_valid_zone_query)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//RCODE")
-        inputs = run(dns_query_lookup_rcode, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -616,7 +663,7 @@ def return_code_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(dns_query_lookup_rcode, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -637,9 +684,6 @@ def return_code_lookup():
 
 def authoritative_lookup():
     domain_name = ast.String(3)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
 
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
@@ -666,16 +710,37 @@ def authoritative_lookup():
         "The input query has a domain name and record type. The function should handle CNAME, DNAME, NS, A, AAAA, TXT, SOA, and wildcard cases among other types. "
         "It should return whether a nameserver answering the query using the input zone file will set the AA flag in the response. ",
         [zone_parameter, query_parameter, response_parameter],
-        precondition=zone_parameter.forall(
-            lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 2).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            (r.get_field("domain_name").matches(valid_dn_re)))
-        & query_parameter.get_field("domain_name").matches(valid_dn_re),
+        # precondition=zone_parameter.forall(
+        #     lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 2).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     (r.get_field("domain_name").matches(valid_dn_re)))
+        # & query_parameter.get_field("domain_name").matches(valid_dn_re),
     )
+    
+    valid_zone_query = ast.Parameter("valid_zone_query", ast.Bool(), description="whether the zone and query are both valid.")
+    
+    is_valid_zone_query = ast.Function(
+        "is_valid_zone_query",
+        "a function that validates a DNS zone file and query according to the DNS RFC semantics. "
+        "The following conditions must hold for a zone file to be considered valid and well-formed:"
+        "1. If the resource record is of type CNAME, then the RDATA must be a valid domain name."
+        "2. If the resource record is of type DNAME, then the RDATA must be a valid domain name."
+        "3. If the resource record is of type NS, then the RDATA must be a valid domain name."
+        "4. All domain names in the zone must be valid according to DNS standards."
+        "5. The query domain name must be valid according to DNS standards.",
+        [zone_parameter, query_parameter, valid_zone_query]
+    )
+    
+    is_valid_domain_name = build_regex_module(maxsize=3)
+
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
+    g.Pipe(dns_query_lookup_authoritative, is_valid_zone_query)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//Authoritative")
-        inputs = run(dns_query_lookup_authoritative, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -696,7 +761,7 @@ def authoritative_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(dns_query_lookup_authoritative, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -717,9 +782,6 @@ def authoritative_lookup():
 
 def loop_count():
     domain_name = ast.String(3)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
 
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
@@ -750,15 +812,35 @@ def loop_count():
         "The query <bar.foo.com., A> will be first rewritten to <other.foo.com., A>, which will  be next rewritten to <test.foo.com., A> using wildcard CNAME record and resolved eventually to IP address 1.2.3.4. "
         "The function should return 2 as the query is rewritten twice.",
         [zone_parameter, query_parameter, response_parameter],
-        precondition=zone_parameter.forall(
-            lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            (r.get_field("domain_name").matches(valid_dn_re)))
-        & query_parameter.get_field("domain_name").matches(valid_dn_re),
+        # precondition=zone_parameter.forall(
+        #     lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     (r.get_field("domain_name").matches(valid_dn_re)))
+        # & query_parameter.get_field("domain_name").matches(valid_dn_re),
     )
+    
+    valid_zone_query = ast.Parameter("valid_zone_query", ast.Bool(), description="whether the zone and query are both valid.")
+    
+    is_valid_zone_query = ast.Function(
+        "is_valid_zone_query",
+        "a function that validates a DNS zone file and query according to the DNS RFC semantics. "
+        "The following conditions must hold for a zone file to be considered valid and well-formed:"
+        "1. If the resource record is of type CNAME, then the RDATA must be a valid domain name."
+        "2. If the resource record is of type DNAME, then the RDATA must be a valid domain name."
+        "3. All domain names in the zone must be valid according to DNS standards."
+        "4. The query domain name must be valid according to DNS standards.",
+        [zone_parameter, query_parameter, valid_zone_query]
+    )
+    
+    is_valid_domain_name = build_regex_module(maxsize=3)
+
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
+    g.Pipe(loop_count, is_valid_zone_query)
+    
     if SIGCOMM:
         output_dir = pathlib.Path("SIGCOMM//LoopCount")
-        inputs = run(loop_count, k=10,
+        inputs = run(g, k=10,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -779,7 +861,7 @@ def loop_count():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(loop_count, k=12,
+                inputs = run(g, k=12,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -800,9 +882,6 @@ def loop_count():
 
 def zonecut():
     domain_name = ast.String(3)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
     
     record_type = ast.Enum(
         "RecordType", ["A", "AAAA", "NS", "TXT", "CNAME", "DNAME", "SOA"])
@@ -831,16 +910,36 @@ def zonecut():
         "It should return 1 if there are relevant zone cut NS records for the query but there are no glue records"
         "It should return 2 if there are relevant zone cut NS records for the query and also glue records in the zone file.",
         [zone_parameter, query_parameter, response_parameter],
-        precondition=zone_parameter.forall(
-            lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            ((r.get_field("record_type") == 2).implies(r.get_field("rdata").matches(valid_dn_re))) &
-            (r.get_field("domain_name").matches(valid_dn_re)))
-        & query_parameter.get_field("domain_name").matches(valid_dn_re),
+        # precondition=zone_parameter.forall(
+        #     lambda r: ((r.get_field("record_type") == 5).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 4).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     ((r.get_field("record_type") == 2).implies(r.get_field("rdata").matches(valid_dn_re))) &
+        #     (r.get_field("domain_name").matches(valid_dn_re)))
+        # & query_parameter.get_field("domain_name").matches(valid_dn_re),
     )
 
+    valid_zone_query = ast.Parameter("valid_zone_query", ast.Bool(), description="whether the zone and query are both valid.")
+    
+    is_valid_zone_query = ast.Function(
+        "is_valid_zone_query",
+        "a function that validates a DNS zone file and query according to the DNS RFC semantics. "
+        "The following conditions must hold for a zone file to be considered valid and well-formed:"
+        "1. If the resource record is of type CNAME, then the RDATA must be a valid domain name."
+        "2. If the resource record is of type DNAME, then the RDATA must be a valid domain name."
+        "3. If the resource record is of type NS, then the RDATA must be a valid domain name."
+        "4. All domain names in the zone must be valid according to DNS standards."
+        "5. The query domain name must be valid according to DNS standards.",
+        [zone_parameter, query_parameter, valid_zone_query]
+    )
+    
+    is_valid_domain_name = build_regex_module(maxsize=3)
+
+    g = eywa.DependencyGraph()
+    g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
+    g.Pipe(dns_query_lookup_zonecut, is_valid_zone_query)
+    
     output_dir = "Zonecut"
-    inputs = run(dns_query_lookup_zonecut, k=5, debug=output_dir)
+    inputs = run(g, k=5, debug=output_dir)
     query_zone_tuples = []
     for input in inputs:
         zone_file, zone_origin = create_zone(input)
@@ -853,42 +952,41 @@ def zonecut():
             queries.append({"Name": query_name, "Type": query_type})
         query_zone_tuples.append((queries, zone_file))
     generate_zone_query_pair_inputs(query_zone_tuples, output_dir)
-
-
-def false_function_to_check_regex():
-    domain_name = ast.String(5)
-
-    label = re.choice(re.text('*'), re.chars('a', 'z'))
-    valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
-
-    query_dn = ast.Parameter("domain_name", domain_name,
-                             description="The domain name input")
-    result = ast.Parameter("result", ast.Bool(
-    ), description="The return value")
-
-    false_function = ast.Function(
-        "false_function",
-        "a function that returns false for all inputs.",
-        [query_dn, result],
-        precondition=(query_dn.matches(valid_dn_re)),
-    )
-
-    output_dir = "Regex"
-    inputs = run(false_function, k=10, debug=output_dir)
-    print(f"Total inputs {len(inputs)}")
     
 if __name__ == "__main__":
-    # false_function_to_check_regex()
     # validate_domain_name()
     # cname_match_check()
     # dname_match_check()
     # ipv4_match_check()
     # ipv4_match_check_no_precondition()
-    wildcard_match_check()
+    # wildcard_match_check()
     # valid_zone_check()
     # full_query_lookup()
     # loop_count()
     # return_code_lookup()
     # authoritative_lookup()
     # zonecut()
-    pass
+    parser = ArgumentParser()
+    parser.add_argument("-m", "--module", type=str, required=True,
+                        choices=["cname", "dname", "wildcard", "full_lookup", "loop_count", "rcode", "authoritative"],
+                        help="The DNS module to generate inputs for.")
+    parser.add_argument("-n", "--nsdi", action="store_true",
+                        help="Generate NSDI inputs.", default=False)    
+    args = parser.parse_args()
+    SIGCOMM = args.nsdi
+    if args.module == "cname":
+        cname_match_check()
+    elif args.module == "dname":
+        dname_match_check()
+    elif args.module == "wildcard":
+        wildcard_match_check()
+    elif args.module == "full_lookup":
+        full_query_lookup()
+    elif args.module == "loop_count":
+        loop_count()
+    elif args.module == "rcode":
+        return_code_lookup()
+    elif args.module == "authoritative":
+        authoritative_lookup()
+    else:
+        print("Invalid module selected.")

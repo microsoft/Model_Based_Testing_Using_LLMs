@@ -178,19 +178,24 @@ def test_prompt():
     
 def test_regex_parser():
     g = eywa.DependencyGraph()
-    label = re.star(re.choice(re.chars('a', 'z'), re.text('*')))
+    label = re.choice(re.chars('a', 'z'), re.text('*'))
     valid_dn_re = re.seq(label, re.star(re.seq(re.text('.'), label)))
+    print(valid_dn_re)
     domain_name = eywa.String(maxsize=3)
     query = ast.Parameter("query", domain_name, "A DNS query domain name.")
-    regex_str = "[a-z\\*]*(\\.[a-z\\*]*)*"
+    regex_str = "[a-z\\*](\\.[a-z\\*])*"
     valid_query = eywa.RegexModule(
         "isValidQuery",
         regex_str,
         query
     )
     
-    oracle = run_wrapper_model(valid_query)
-    print(oracle.implementation)
+    print(valid_query.get_regex())
+    print(re.ismatch(valid_dn_re,''))
+    print(re.ismatch(valid_query.get_regex(),''))
+    
+    # oracle = run_wrapper_model(valid_query)
+    # print(oracle.implementation)
     
     
 def test_dname():
@@ -279,7 +284,7 @@ if __name__ == "__main__":
     # test_function_return()
     # test_prompt()
     # test_point()
-    # test_regex_parser()
+    test_regex_parser()
     # test_dname()
-    test_ipv4_match()
+    # test_ipv4_match()
     pass
