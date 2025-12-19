@@ -13,19 +13,19 @@ $ git clone https://github.com/microsoft/Model_Based_Testing_Using_LLMs.git
 
 We recommend setting up a virtual environment first.
 ```bash
-$ cd Eywa
+$ cd Model_Based_Testing_Using_LLMs
 $ python3 -m venv eywa_env
 $ source eywa_env/bin/activate
 ```
 
-Navigate to the **src** directory and install the required libraries.
+Install the required libraries.
 ```bash
-$ cd src
-$ pip3 install -r requirements.txt
+$ pip3 install -e .
 ```
 
 Now, you need to add the OpenAI API key to the current folder.
 ```bash
+$ cd scripts
 $ touch openai_key.txt
 $ echo "sk..." > openai_key.txt
 ```
