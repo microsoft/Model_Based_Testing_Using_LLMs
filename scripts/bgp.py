@@ -11,9 +11,8 @@ from termcolor import colored
 
 NSDI = False
 output_dir_common = pathlib.Path("..//tests//bgp//NSDI")
-n_models = 1
 
-def confed_check():
+def confed_check(runs=10):
     
     """
     
@@ -100,11 +99,11 @@ A few points to keep in mind:
     )
 
     g = eywa.DependencyGraph()
-    g.CallEdge(router_validity_model, valid_input_model)
+    g.CallEdge(valid_input_model, [router_validity_model])
     g.Pipe(confederation_model, valid_input_model)
     
     output_dir = output_dir_common / "CONFED"
-    inputs = run(g, k=n_models, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
 
     ## Save test cases
 
@@ -140,6 +139,534 @@ A few points to keep in mind:
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP confederation check.")
     
+def rr_check(runs=10):
+    """
+    --------->------- R2 --------->-------
+
+    input parameters:
+    1. inRRflag : 
+        0 : R2 is a client to R1 (RR)
+        1 : R2 is a route reflector to R1
+        2 : R2 is a non-client to R1 (RR)
+
+    2. outRRflag :
+        0 : R2 is a client to R3 (RR)
+        1 : R2 is a route reflector to R3
+        2 : R2 is a non-client to R3 (RR)
+
+    3. inAS : 
+        True : if AS of R2 is same as AS of R1
+        False : if AS of R2 is different from AS of R1
+    
+    4. outAS :
+        True : if AS of R2 is same as AS of R3
+        False : if AS of R2 is different from AS of R3
+
+    output:
+    1. isReceivedR2 : True if route is received at R2
+    2. isReceivedR3 : True if route is received at R3
+
+    RR rules:
+    1. A route learned from a non-RR client is advertised to RR clients but not to non-RR clients.
+    2. A route learned from an RR client is advertised to both RR clients and non-RR clients. Even the RR client that advertised the route will receive a copy and discard it because it sees itself as the originator.
+    3. A route learned from an EBGP neighbor is advertised to both RR clients and non-RR clients.
+    """
+    
+    outputRIB = ast.Struct(
+        "outputRIB",
+        isReceived = ast.Bool(),
+        isAdvertised = ast.Bool()
+    )
+
+    p_inRRflag = ast.Parameter("inRRflag", ast.Int(32), "0 : R2 is a client to R1 (RR), 1 : R2 is a route reflector to R1, 2 : R2 is a non-client to R1 (RR)")
+    p_outRRflag = ast.Parameter("outRRflag", ast.Int(32), "0 : R2 is a client to R3 (RR), 1 : R2 is a route reflector to R3, 2 : R2 is a non-client to R3 (RR)")
+    p_inAS = ast.Parameter("inAS", ast.Bool(), "True : if AS of R2 is same as AS of R1, False : if AS of R2 is different from AS of R1")
+    p_outAS = ast.Parameter("outAS", ast.Bool(), "True : if AS of R2 is same as AS of R3, False : if AS of R2 is different from AS of R3")
+
+    p_valid = ast.Parameter("isValidConfiguration", ast.Bool(), "True if the router configuration (R2) is valid, false otherwise")
+    
+    p_rib = ast.Parameter("finalRIBs", outputRIB, "a struct containing two boolean values indicating whether the route is received at router 2 at one interface and if the route is advertised to another router through another interface respectively.")
+    p_void = ast.Parameter("void_res", ast.Void(), "")
+    
+    router_validity_model = ast.Function(
+        "checkValidRouterConfiguration",
+        """A function that takes as input:inRRflag, outRRflag, as_num, inAS, outAS and returns True if the router configuration is valid, false otherwise. 
+Conditions for validitity:
+1. The flags inRRflag and outRRflag should be in the range [0, 2] both inclusive.
+2. if inAS is False, then inRRflag should be 2.
+3. if outAS is False, then outRRflag should be 2.""",
+        [p_inRRflag, p_outRRflag, p_inAS, p_outAS, p_valid]
+    )
+    
+    rr_model = ast.Function(
+        "predictRouteReflectorRibs",
+        """A function that takes as input some flags related to router 2 and its relationship with neighbors and updates a struct with two booleans isReceived (true if route received by R2) and isAdvertised (true if route advertised to neighbor).
+You have to take into consideration all BGP route reflector rules, eBGP, iBGP rules.""",
+        [p_inRRflag, p_outRRflag, p_inAS, p_outAS, p_rib, p_void]
+    )
+    
+    g = eywa.DependencyGraph()
+    g.Pipe(rr_model, router_validity_model)
+
+    output_dir = output_dir_common / "RR"
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+
+    ## Save test cases
+    test_dir = output_dir
+    test_dir.mkdir(exist_ok=True)
+    test_cases = []
+    for input in inputs:
+        inRRflag = input[0]
+        outRRflag = input[1]
+        inAS = input[2]
+        outAS = input[3]
+        test_case = {
+            "inRRflag": inRRflag,
+            "outRRflag": outRRflag,
+            "inAS": inAS,
+            "outAS": outAS
+        }
+        test_cases.append(test_case)
+
+    with open(test_dir / 'tests.json', 'w') as f:
+        json.dump(test_cases, f, indent=4)
+    print(f"[DONE] Generated {len(test_cases)} test cases for BGP route reflector check.")
+
+def rmap_pl_check(runs=10):
+    # Define a prefixListEntry struct with fields prefix, prefixLength, le, ge, any, permit
+    pr_list_entry = ast.Struct(
+        "PrefixListEntry",
+        prefix = ast.Int(32),
+        prefixLength = ast.Int(8),
+        le = ast.Int(32),
+        ge = ast.Int(32),
+        any = ast.Bool(),
+        permit = ast.Bool()
+    )
+
+    # Define a struct named Route with fields prefix, prefixLength, nextHop, localPref, asPath, community, origin, med
+    route = ast.Struct(
+        "Route",
+        prefix = ast.Int(32),
+        prefixLength = ast.Int(8),
+        nextHop = ast.Int(32),
+        localPref = ast.Int(32),
+        community = ast.Array(ast.Int(32), 1),
+        med = ast.Int(32)
+    )
+    
+    # Prefix list is a single entry (not an array)
+    pr_list = pr_list_entry
+    
+    # Removed all set* fields from route map stanza; matchPrefixList is a single entry now
+    rmap_stanza = ast.Struct(
+        "RouteMapStanza",
+        matchPrefixList = pr_list,
+        matchLocalPref = ast.Int(32),
+        matchMed = ast.Int(32)
+    )
+    
+    rmap = ast.Struct(
+        "RouteMap",
+        stanza = ast.Array(rmap_stanza, 1)
+    )
+    
+    result = ast.Struct(
+        "Result",
+        route = route,
+        isPermitted = ast.Bool()
+    )
+    
+    p0 = ast.Parameter("route", route, "Route to be matched")
+    p1 = ast.Parameter("routeMap", rmap, "Route map to be applied")
+    p2 = ast.Parameter("result", result, "Result of applying route map on route")
+    p3 = ast.Parameter("void_res", ast.Void(), "")
+    
+    p4 = ast.Parameter("maskLength", ast.Int(32), "The length of the prefix")
+    p5 = ast.Parameter("subnetMask", ast.Int(32), "The unsinged integer representation of the prefix length")
+    p6 = ast.Parameter("pfe", pr_list_entry, "Prefix list entry")
+    p7 = ast.Parameter("pr_match", ast.Bool(), "True if the route matches the prefix list entry")
+    
+    p8 = ast.Parameter("prefixList", pr_list, "Single prefix list entry")
+    p9 = ast.Parameter("valid", ast.Bool(), "True if the prefix list is valid")
+    p10 = ast.Parameter("validRoute", ast.Bool(), "True if the route is valid")
+    p11 = ast.Parameter("validInputs", ast.Bool(), "True if the route map and route are valid")
+    
+    prefix_length_to_subnet_mask_model = ast.Function(
+        "prefixLenToSubnetMask",
+        "a function that takes as input the prefix length and converts it to the corresponding unsigned integer representation",
+        [p4, p5]
+    )
+    
+    prefix_list_entry_match_model = ast.Function(
+        "isMatchPrefixListEntry",
+        """A function that takes as input a prefix list entry and a BGP route advertisement. If the route advertisement matches the prefix, then the function should return the value of the permit flag. In case there is no match, the function should vacuously return false.""",
+        [p0, p6, p7]
+    )
+    
+    route_validity_model =  ast.Function(
+        "isValidRoute",
+        """A function that checks whether the BGP route advertisement has a valid BGP attributes.
+Conditions for valiidity:
+    1. The IPv4 address should be in the range 1671377732 - 1679687938.
+    2. The subnet mask length must be in the range 0-32.
+    3. The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0.
+    4. The local preference value should be in the range [100, 200].
+    5. The MED value should be in the range [20, 50].
+    6. The next hop value should be in the range 1671377732 - 1679687938.
+    7. The community value should be 0.""",
+        [p0, p10]
+    )
+    
+    prefix_list_validity_model = ast.Function(
+        "isValidPrefixList",
+        """A function that checks whether an input prefix list (single entry) is valid.
+Conditions for validity for the single prefix-list entry:
+    1. If the 'any' flag is set, then:
+        i) the IPv4 address must be equal to 0
+        ii) the subnet mask length must be equal to 0
+        iii) GE must be equal to 0
+        iv) LE must be equal to 32
+    2. If the 'any' flag is not set, then:
+        i) The IPv4 address should be in the range 1671377732 - 1679687938.
+        ii) The subnet mask length, LE and GE values must all be in the range 0-32.
+        iii) subnet mask length <= GE <= LE
+        iv) The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0""",
+        [p8, p9]
+    )
+    
+    valid_input_model = ast.Function(
+        "checkValidInputs",
+        """A function that takes as input a BGP route advertisement and a route map. It checks whether the input route advertisement and route map are valid. The function should return true if both the route advertisement and route map are valid, false otherwise.
+Conditions for validity:
+    1. The single prefix-list entry should be valid.
+    2. matchLocalPref should be in the range [100, 200].
+    3. matchMed should be in the range [20, 50].
+    4. The route advertisement should be valid.""",
+    [p0, p1, p11]
+    )
+    
+    rmap_match_model = ast.Function(
+        "isMatchRouteMap",
+        """A function that takes as input a BGP route advertisement and a route map. It checks whether the route advertisement matches the stanza in the route map.
+If a match is found, the function should update the Result struct's isPermitted flag according to the matching stanza's permit value and set the output route accordingly. If no match is found, the function should set the isPermitted flag in Result struct to false and the attributes of the route should be set to zero.""",
+        [p0, p1, p2, p3]
+    )
+
+    ## New API
+    g = eywa.DependencyGraph()
+    g.CallEdge(prefix_list_validity_model, [prefix_length_to_subnet_mask_model])
+    g.CallEdge(route_validity_model, [prefix_length_to_subnet_mask_model])
+    g.CallEdge(valid_input_model, [prefix_list_validity_model, route_validity_model])
+    g.CallEdge(prefix_list_entry_match_model, [prefix_length_to_subnet_mask_model])
+    g.CallEdge(rmap_match_model, [prefix_list_entry_match_model])
+    g.Pipe(rmap_match_model, valid_input_model)
+
+    output_dir = output_dir_common / "RMAP_PL"
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    
+    ## Save test cases
+    test_dir = output_dir
+    test_dir.mkdir(exist_ok=True)
+    test_cases = []
+    for input in inputs:
+        route = input[0]
+        routeMap = input[1]
+        # matchPrefixList is a single entry now (not an array)
+        mpl = routeMap["stanza"][0]["matchPrefixList"]
+        test_case = {
+            "route": {
+                "prefix": route["prefix"],
+                "prefixLength": route["prefixLength"],
+                "nextHop": route["nextHop"],
+                "localPref": route["localPref"],
+                "community": route["community"][0],
+                "med": route["med"]
+            },
+            "routeMap": {
+                "stanza": [
+                    {
+                        "matchPrefixList": {    
+                            "prefix": mpl["prefix"],
+                            "prefixLength": mpl["prefixLength"],
+                            "le": mpl["le"],
+                            "ge": mpl["ge"],
+                            "any": mpl["any"],
+                            "permit": mpl["permit"]
+                        },
+                        "matchLocalPref": routeMap["stanza"][0]["matchLocalPref"],
+                        "matchMed": routeMap["stanza"][0]["matchMed"]
+                    }       
+                ]
+            }
+        }
+        test_cases.append(test_case)
+    with open(test_dir / 'tests.json', 'w') as f:
+        json.dump(test_cases, f, indent=4)
+    print(f"[DONE] Generated {len(test_cases)} test cases for BGP route map with single-entry prefix list.")
+
+def rr_rmap_check(runs=10):
+    """
+    input parameters:
+    1. inRRflag : 
+        0 : R2 is a client to R1 (RR)
+        1 : R2 is a route reflector to R1
+        2 : R2 is a non-client to R1 (RR)
+
+    2. outRRflag :
+        0 : R2 is a client to R3 (RR)
+        1 : R2 is a route reflector to R3
+        2 : R2 is a non-client to R3 (RR)
+
+    3. inAS : 
+        True : if AS of R2 is same as AS of R1
+        False : if AS of R2 is different from AS of R1
+    
+    4. outAS :
+        True : if AS of R2 is same as AS of R3
+        False : if AS of R2 is different from AS of R3
+
+    5. outRmap: outbound Route map to be applied on the advertised route before advertising to neighbor
+
+    6. inRoute: Route to be matched
+
+    output:
+    1. isReceived : True if route is received at R2
+    2. isAdvertised : True if route is received at R3
+    3. route_at_R2 : Route at R2
+    4. route_at_R3 : Route at R3
+    
+    """
+
+    # Define a prefixListEntry struct with fields prefix, prefixLength, le, ge, any, permit
+    prefix_list_entry = ast.Struct(
+        "PrefixListEntry",
+        prefix = ast.Int(32),
+        prefixLength = ast.Int(8),
+        le = ast.Int(32),
+        ge = ast.Int(32),
+        any = ast.Bool(),
+        permit = ast.Bool()
+    )
+
+    # Define a struct named Route with fields prefix, prefixLength, nextHop, localPref, asPath, community, origin, med
+    route = ast.Struct(
+        "Route",
+        prefix = ast.Int(32),
+        prefixLength = ast.Int(8),
+        nextHop = ast.Int(32),
+        localPref = ast.Int(32),
+        community = ast.Array(ast.Int(32), 1),
+        med = ast.Int(32)
+    )
+    
+    # Single prefix list entry (not an array)
+    prefix_list = prefix_list_entry
+    
+    # Removed all set* fields from route map stanza; matchPrefixList is a single entry now
+    rmap_stanza = ast.Struct(
+        "RouteMapStanza",
+        matchPrefixList = prefix_list,
+        matchLocalPref = ast.Int(32),
+        matchMed = ast.Int(32)
+    )
+    
+    rmap = ast.Struct(
+        "RouteMap",
+        stanza = ast.Array(rmap_stanza, 1)
+    )
+    
+    result = ast.Struct(
+        "Result",
+        route = route,
+        isPermitted = ast.Bool()
+    )
+    
+    final_output = ast.Struct(
+        "outputRIB",
+        isReceivedR2 = ast.Bool(),
+        isReceivedR3 = ast.Bool(),
+        route_at_R2 = route,
+        route_at_R3 = route
+    )
+
+    p_route = ast.Parameter("route", route, "Route to be matched")
+    p_rmap = ast.Parameter("routeMap", rmap, "Route map to be applied")
+    p_result = ast.Parameter("result", result, "Result of applying route map on route")
+    
+    p_mask_len = ast.Parameter("maskLength", ast.Int(32), "The length of the prefix")
+    p_subnet_mask = ast.Parameter("subnetMask", ast.Int(32), "The unsinged integer representation of the prefix length")
+    p_prefix_list_entry = ast.Parameter("prefixListEntry", prefix_list_entry, "Prefix list entry")
+    p_prefix_match = ast.Parameter("prefix_match", ast.Bool(), "True if the route matches the prefix list entry")
+    
+    # prefixList param is now a single entry
+    p_prefix_list = ast.Parameter("prefixList", prefix_list, "Single prefix list entry")
+    p_valid_prefix_list = ast.Parameter("prefixListValid", ast.Bool(), "True if the prefix list is valid")
+    p_valid_route = ast.Parameter("validRoute", ast.Bool(), "True if the route is valid")
+    p_valid_route_rmap = ast.Parameter("validRouteRmap", ast.Bool(), "True if the route map and route are valid")
+
+    p_inRRflag = ast.Parameter("inRRflag", ast.Int(32), "0 : R2 is a client to R1 (RR), 1 : R2 is a route reflector to R1, 2 : R2 is a non-client to R1 (RR)")
+    p_outRRflag = ast.Parameter("outRRflag", ast.Int(32), "0 : R2 is a client to R3 (RR), 1 : R2 is a route reflector to R3, 2 : R2 is a non-client to R3 (RR)")
+    p_inAS = ast.Parameter("inAS", ast.Bool(), "True : if AS of R2 is same as AS of R1, False : if AS of R2 is different from AS of R1")
+    p_outAS = ast.Parameter("outAS", ast.Bool(), "True : if AS of R2 is same as AS of R3, False : if AS of R2 is different from AS of R3")
+
+    p_rr_valid = ast.Parameter("isValidConfiguration", ast.Bool(), "True if the router configuration (R2) is valid, false otherwise")
+
+    p_input_valid = ast.Parameter("isValidInput", ast.Bool(), "True if the input parameters are valid, false otherwise")
+    
+    p_rib = ast.Parameter("finalOutput", final_output, "a struct containing two boolean values indicating whether the route is received at router 2 at one interface and if the route is advertised to another router through another interface respectively.")
+    p_void = ast.Parameter("void_res", ast.Void(), "")
+
+    prefix_length_to_subnet_mask_model = ast.Function(
+        "prefixLenToSubnetMask",
+        "a function that takes as input the prefix length and converts it to the corresponding unsigned integer representation",
+        [p_mask_len, p_subnet_mask]
+    )
+    
+    prefix_list_entry_match_model = ast.Function(
+        "isMatchPrefixListEntry",
+        """A function that takes as input a prefix list entry and a BGP route advertisement. If the route advertisement matches the prefix, then the function should return the value of the permit flag. In case there is no match, the function should vacuously return false.""",
+        [p_route, p_prefix_list_entry, p_prefix_match]
+    )
+    
+    route_validity_model =  ast.Function(
+        "isValidRoute",
+        """A function that checks whether the BGP route advertisement has a valid BGP attributes.
+Conditions for valiidity:
+    1. The IPv4 address should be in the range 1671377732 - 1679687938.
+    2. The subnet mask length must be in the range 0-32.
+    3. The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0.
+    4. The local preference value should be in the range [100, 200].
+    5. The MED value should be in the range [20, 50].
+    6. The next hop value should be in the range 1671377732 - 1679687938.
+    7. The community value should be 0.""",
+        [p_route, p_valid_route]
+    )
+    
+    prefix_list_validity_model = ast.Function(
+        "isValidPrefixList",
+        """A function that checks whether an input prefix list (single entry) is valid.
+Conditions for validity for the single prefix-list entry:
+    1. If the 'any' flag is set, then:
+        i) the IPv4 address must be equal to 0
+        ii) the subnet mask length must be equal to 0
+        iii) GE must be equal to 0
+        iv) LE must be equal to 32
+    2. If the 'any' flag is not set, then:
+        i) The IPv4 address should be in the range 1671377732 - 1679687938.
+        ii) The subnet mask length, LE and GE values must all be in the range 0-32.
+        iii) subnet mask length <= GE <= LE
+        iv) The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0""",
+        [p_prefix_list, p_valid_prefix_list]
+    )
+    
+    route_rmap_validity_model = ast.Function(
+        "isValidRouteRmap",
+        """A function that takes as input a BGP route advertisement and a route map. It checks whether the input route advertisement and route map are valid. The function should return true if both the route advertisement and route map are valid, false otherwise.
+Conditions for validity:
+    1. The prefix list (single entry) should be valid.
+    2. matchLocalPref should be in the range [100, 200].
+    3. matchMed should be in the range [20, 50].
+    4. The route advertisement should be valid.""",
+    [p_route, p_rmap, p_valid_route_rmap]
+    )
+
+    
+    rmap_match_model = ast.Function(
+        "isMatchRouteMap",
+        """A function that takes as input a BGP route advertisement and a route map. It checks whether the route advertisement matches the stanza in the route map.
+If a match is found, the function should update a struct with the output route advertisement and a boolean value indicating whether the route is permitted by the route map. If no match is found, the function should set the isPermitted flag in Result struct to false and the attributes of the route should be set to zero.""",
+        [p_route, p_rmap, p_result, p_void]
+    )
+    
+    
+    rr_validity_model = ast.Function(
+        "isValidRouteReflectorFlags",
+        """A function that takes as input:inRRflag, outRRflag, as_num, inAS, outAS and returns True if the router configuration is valid, false otherwise. 
+Conditions for validitity:
+1. The flags inRRflag and outRRflag should be in the range [0, 2] both inclusive.
+2. if inAS is False, then inRRflag should be 2.
+3. if outAS is False, then outRRflag should be 2.""",
+        [p_inRRflag, p_outRRflag, p_inAS, p_outAS, p_rr_valid]
+    )
+    
+
+    input_validity_model = ast.Function(
+        "isValidInput",
+        """A function that takes as input the router configuration parameters, route advertisement and route map. It checks whether the input parameters are valid. The function should return true if all the input parameters are valid, false otherwise.""",
+        [p_route, p_rmap, p_inRRflag, p_outRRflag, p_inAS, p_outAS, p_input_valid]
+    )
+
+    rr_model = ast.Function(
+        "predictRouteReflectorRibs",
+        """A function that takes as input an incoming route, an outbound route map, and some flags related to router 2 and its relationship with neighbors and updates a struct with two booleans isReceived (true if route received by R2) and isAdvertised (true if route advertised to neighbor) anf two routes: route_at_R2 and route_at_R3.
+If R2 receives the route, then before advertising it to other interfaces, it applies the outbound route map on it. You have to take into consideration all BGP route reflector rules, eBGP, iBGP rules and route map rules.""",
+        [p_route, p_rmap, p_inRRflag, p_outRRflag, p_inAS, p_outAS, p_rib, p_void]
+    )
+    
+    ## New API
+    g = eywa.DependencyGraph()
+    g.CallEdge(prefix_list_validity_model, [prefix_length_to_subnet_mask_model])
+    g.CallEdge(route_validity_model, [prefix_length_to_subnet_mask_model])
+    g.CallEdge(route_rmap_validity_model, [prefix_list_validity_model, route_validity_model])
+    g.CallEdge(input_validity_model, [route_rmap_validity_model, rr_validity_model])
+    g.CallEdge(rmap_match_model, [prefix_list_entry_match_model])
+    g.CallEdge(rr_model, [rmap_match_model])
+    g.Pipe(rr_model, input_validity_model)
+
+    output_dir = output_dir_common / "RR_RMAP"
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+
+    ## Save test cases
+    test_dir = output_dir
+    test_dir.mkdir(exist_ok=True)
+    test_cases = []
+    for input in inputs:
+        route = input[0]
+        routeMap = input[1]
+        inRRflag = input[2]
+        outRRflag = input[3]
+        inAS = input[4]
+        outAS = input[5]
+
+        # matchPrefixList is now a single entry (not an array)
+        mpl = routeMap["stanza"][0]["matchPrefixList"]
+
+        test_case = {
+            "route": {
+                "prefix": route["prefix"],
+                "prefixLength": route["prefixLength"],
+                "nextHop": route["nextHop"],
+                "localPref": route["localPref"],
+                "community": route["community"][0],
+                "med": route["med"]
+            },
+            "routeMap": {
+                "stanza": [
+                    {
+                        "matchPrefixList": {    
+                            "prefix": mpl["prefix"],
+                            "prefixLength": mpl["prefixLength"],
+                            "le": mpl["le"],
+                            "ge": mpl["ge"],
+                            "any": mpl["any"],
+                            "permit": mpl["permit"]
+                        },
+                        "matchLocalPref": routeMap["stanza"][0]["matchLocalPref"],
+                        "matchMed": routeMap["stanza"][0]["matchMed"]
+                    }
+                ]
+            },
+            "inRRflag": inRRflag,
+            "outRRflag": outRRflag,
+            "inAS": inAS,
+            "outAS": outAS
+        }
+        test_cases.append(test_case)
+    with open(test_dir / 'tests.json', 'w') as f:
+        json.dump(test_cases, f, indent=4)
+    print(f"[DONE] Generated {len(test_cases)} test cases for BGP route reflector with route map check.")
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -152,22 +679,14 @@ if __name__ == "__main__":
                         help="Number of runs to generate inputs for.", default=10)
     args = parser.parse_args()
     NSDI = args.nsdi
-    if args.module == "cname":
-        cname_match_check(args.runs)
-    elif args.module == "dname":
-        dname_match_check(args.runs)
-    elif args.module == "wildcard":
-        wildcard_match_check(args.runs)
-    elif args.module == "ipv4":
-        ipv4_match_check(args.runs)
-    elif args.module == "full_lookup":
-        full_query_lookup()
-    elif args.module == "loop_count":
-        loop_count()
-    elif args.module == "rcode":
-        return_code_lookup()
-    elif args.module == "authoritative":
-        authoritative_lookup()
+    if args.module == "confed":
+        confed_check(args.runs)
+    elif args.module == "rr":
+        rr_check(args.runs)
+    elif args.module == "rmap_pl":
+        rmap_pl_check(args.runs)
+    elif args.module == "rr_rmap":
+        rr_rmap_check(args.runs)
     else:
         print("Invalid module selected.")
 

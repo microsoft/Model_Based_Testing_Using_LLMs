@@ -39,11 +39,11 @@ services:
     container_name: gobgp_1
     privileged: true
     volumes:
-     - $PWD/gobgp1:/etc/gobgp:rw
+     - ./gobgp1:/etc/gobgp:rw
     command: "gobgpd -t yaml -f /etc/gobgp/gobgp.yml -p > /etc/gobgp/log"
     networks:
       test_net1:
-        ipv4_address: 2.0.0.2
+        ipv4_address: 2.0.0.3
       test_net2:
         ipv4_address: 3.0.0.3
         
@@ -53,10 +53,10 @@ services:
     container_name: exabgp_1
     privileged: true
     volumes:
-     - $PWD/exabgp1:/exabgp:rw
+     - ./exabgp1:/exabgp:rw
     networks:
       test_net1:
-        ipv4_address: 2.0.0.3
+        ipv4_address: 2.0.0.2
     entrypoint: tail -f /dev/null
 
 
@@ -68,7 +68,7 @@ services:
       container_name: gobgp_2
       privileged: true
       volumes:
-      - $PWD/gobgp2:/etc/gobgp:rw
+      - ./gobgp2:/etc/gobgp:rw
       command: "gobgpd -t yaml -f /etc/gobgp/gobgp.yml -p > /etc/gobgp/log"
       networks:
         test_net2:
@@ -84,7 +84,7 @@ services:
       container_name: gobgp_3
       privileged: true
       volumes:
-      - $PWD/gobgp3:/etc/gobgp:rw
+      - ./gobgp3:/etc/gobgp:rw
       command: "gobgpd -t yaml -f /etc/gobgp/gobgp.yml -p > /etc/gobgp/log"
       networks:
         test_net3:

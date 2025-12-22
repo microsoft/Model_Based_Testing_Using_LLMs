@@ -8,8 +8,8 @@ networks:
     ipam:
       driver: default
       config:
-       - subnet: 3.0.0.0/24
-         gateway: 3.0.0.1
+       - subnet: 6.0.0.0/24
+         gateway: 6.0.0.1
 
   test_net2:
     enable_ipv6: false
@@ -17,8 +17,8 @@ networks:
     ipam:
       driver: default
       config:
-       - subnet: 4.0.0.0/24
-         gateway: 4.0.0.1
+       - subnet: 8.0.0.0/24
+         gateway: 8.0.0.1
 
 
 services:
@@ -31,9 +31,9 @@ services:
     command: "/bin/bash /etc/frr/start_frr.sh" # frr10: "/usr/lib/frr/docker-start", frr8: "/bin/bash /etc/frr/start_frr.sh"
     networks:
       test_net1:
-        ipv4_address: 3.0.0.2
+        ipv4_address: 6.0.0.2
       test_net2:
-        ipv4_address: 4.0.0.2
+        ipv4_address: 8.0.0.2
   
   frr_3:
     image: "github/frr10:latest"
@@ -44,7 +44,7 @@ services:
     command: "/bin/bash /etc/frr/start_frr.sh" # frr10: "/usr/lib/frr/docker-start", frr8: "/bin/bash /etc/frr/start_frr.sh"
     networks:
       test_net2:
-        ipv4_address: 4.0.0.3
+        ipv4_address: 8.0.0.3
   
   exabgp_1:
     image: "mikenowak/exabgp:latest"
@@ -54,7 +54,7 @@ services:
       - ./exabgp1:/exabgp:rw
     networks:
       test_net1:
-        ipv4_address: 3.0.0.3
+        ipv4_address: 6.0.0.3
     entrypoint: tail -f /dev/null # run this script when the container starts. This is a trick to keep the container running.
     
 

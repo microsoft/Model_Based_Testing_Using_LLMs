@@ -6,7 +6,7 @@ from sys import stdout
 from time import sleep
 
 messages = [
-    'announce route 100.10.0.0/24 next-hop self as-path [100 64512]',
+    'announce route 100.0.0.0/8 next-hop self',
 ]
 
 sleep(5)
