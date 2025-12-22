@@ -34,7 +34,7 @@ def plot_graphs(dns_model, num_runs):
         
         
 parser = ArgumentParser(description="Plot DNS Model Graphs")
-parser.add_argument('--model', type=str, required=True, help="DNS model to plot (cname, dname, wildcard, ipv4)")
-parser.add_argument('--runs', type=int, required=True, help="Number of runs to plot")
+parser.add_argument('-m', '--model', type=str, required=True, help="DNS model to plot (cname, dname, wildcard, ipv4)")
+parser.add_argument('-r', '--runs', type=int, required=True, help="Number of runs to plot")
 args = parser.parse_args()
 plot_graphs(args.model, args.runs)

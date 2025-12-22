@@ -1,11 +1,16 @@
 global:
   config:
     router-id: 192.168.255.2
-    as: 768
+    as: 256
+  confederation:
+    config:
+      enabled: true
+      identifier: 1024
+      member-as-list: []
 neighbors:
 - config:
     neighbor-address: 4.0.0.2
-    peer-as: 1536
+    peer-as: 768
   transport:
     config:
       local-address: 4.0.0.3

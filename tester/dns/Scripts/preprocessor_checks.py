@@ -50,7 +50,7 @@ def delete_container(container_name: str) -> None:
     # List all container names
     print(f'### Entered delete_container() for {container_name}')
     cmd_status = subprocess.run(
-        ['sudo', 'docker', 'ps', '-a', '--format', '{{.Names}}'],
+        ['docker', 'ps', '-a', '--format', '{{.Names}}'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
     )
     output = cmd_status.stdout.decode("utf-8").strip()
@@ -66,7 +66,7 @@ def delete_container(container_name: str) -> None:
     # Try normal docker rm -f first
     try:
         print(f'### Trying to remove container {container_name} normally...')
-        subprocess.run(['sudo', 'docker', 'rm', '-f', container_name], check=True)
+        subprocess.run(['docker', 'rm', '-f', container_name], check=True)
         return
     except subprocess.CalledProcessError:
         # If that fails, fall back to killing the process
@@ -75,23 +75,23 @@ def delete_container(container_name: str) -> None:
             # Find the container's underlying process via `docker inspect`
             # print(f'### Inspecting container {container_name} to find its PID...')
             inspect = subprocess.run(
-                ['sudo', 'docker', 'inspect', '--format', '{{.State.Pid}}', container_name],
+                ['docker', 'inspect', '--format', '{{.State.Pid}}', container_name],
                 stdout=subprocess.PIPE, check=True
             )
             pid = inspect.stdout.decode("utf-8").strip()
             if pid.isdigit():
-                subprocess.run(['sudo', 'kill', '-9', pid], check=False)
+                subprocess.run(['kill', '-9', pid], check=False)
                 # print(f'### Killed process {pid} for container {container_name}.')
         except subprocess.CalledProcessError:
             # fallback: generic ps|grep kill if needed
             print(f'### Inspect failed, falling back to generic ps|grep kill for {container_name}...')
             subprocess.run(
-                f"sudo kill -9 $(ps aux | grep {container_name} | grep -v grep | awk '{{print $2}}')",
+                f"kill -9 $(ps aux | grep {container_name} | grep -v grep | awk '{{print $2}}')",
                 shell=True, check=False
             )
         # Finally, try removing again
         # print(f'### Finally Trying again to remove container {container_name}...')
-        subprocess.run(['sudo', 'docker', 'rm', '-f', container_name], check=False)
+        subprocess.run(['docker', 'rm', '-f', container_name], check=False)
 
 def bind(zone_file: pathlib.Path,
          origin: str,
@@ -113,11 +113,11 @@ def bind(zone_file: pathlib.Path,
     """
     if new:
         delete_container(f'{cid}_bind_server')
-        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * int(cid))+':53/udp',
+        subprocess.run(['docker', 'run', '-dp', str(port * int(cid))+':53/udp',
                         '--name=' + cid + '_bind_server', 'bind' + tag], check=False)
-    subprocess.run(['sudo', 'docker', 'cp', zone_file, cid +
+    subprocess.run(['docker', 'cp', zone_file, cid +
                     '_bind_server:.'], check=False)
-    compilezone = subprocess.run(['sudo', 'docker', 'exec', cid + '_bind_server', 'named-checkzone', '-i',
+    compilezone = subprocess.run(['docker', 'exec', cid + '_bind_server', 'named-checkzone', '-i',
                                   'local', '-k', 'ignore', origin, f'{zone_file.name}'],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     output = compilezone.stdout.decode("utf-8").strip().split('\n')
@@ -144,11 +144,11 @@ def nsd(zone_file: pathlib.Path,
     """
     if new:
         delete_container(f'{cid}_nsd_server')
-        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * int(cid))+':53/udp',
+        subprocess.run(['docker', 'run', '-dp', str(port * int(cid))+':53/udp',
                         '--name=' + cid + '_nsd_server', 'nsd' + tag], check=False)
-    subprocess.run(['sudo', 'docker', 'cp', zone_file, cid +
+    subprocess.run(['docker', 'cp', zone_file, cid +
                     '_nsd_server:.'], check=False)
-    compilezone = subprocess.run(['sudo', 'docker', 'exec', cid + '_nsd_server', 'nsd-checkzone',
+    compilezone = subprocess.run(['docker', 'exec', cid + '_nsd_server', 'nsd-checkzone',
                                   origin, f'{zone_file.name}'],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     output = compilezone.stdout.decode("utf-8").strip().split('\n')
@@ -175,11 +175,11 @@ def knot(zone_file: pathlib.Path,
     """
     if new:
         delete_container(f'{cid}_knot_server')
-        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * int(cid))+':53/udp',
+        subprocess.run(['docker', 'run', '-dp', str(port * int(cid))+':53/udp',
                         '--name=' + cid + '_knot_server', 'knot' + tag], check=False)
-    subprocess.run(['sudo', 'docker', 'cp', zone_file, cid +
+    subprocess.run(['docker', 'cp', zone_file, cid +
                     '_knot_server:.'], check=False)
-    compilezone = subprocess.run(['sudo', 'docker', 'exec', cid + '_knot_server', 'kzonecheck', '-v', '-o',
+    compilezone = subprocess.run(['docker', 'exec', cid + '_knot_server', 'kzonecheck', '-v', '-o',
                                   origin, f'{zone_file.name}'],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     output = compilezone.stdout.decode("utf-8").strip().split('\n')
@@ -206,19 +206,19 @@ def powerdns(zone_file: pathlib.Path,
     """
     if new:
         delete_container(f'{cid}_powerdns_server')
-        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * int(cid))+':53/udp',
+        subprocess.run(['docker', 'run', '-dp', str(port * int(cid))+':53/udp',
                         '--name=' + cid + '_powerdns_server', 'powerdns' + tag], check=False)
-    subprocess.run(['sudo', 'docker', 'cp', zone_file, cid +
+    subprocess.run(['docker', 'cp', zone_file, cid +
                     '_powerdns_server:/usr/local/etc/' + origin], check=False)
     bindbackend = f'zone "{origin}" {{\n  file "/usr/local/etc/{origin}";\n  type master;\n}};'
     with open('bindbackend'+cid+'.conf', 'w') as file_pointer:
         file_pointer.write(bindbackend)
-    subprocess.run(['sudo', 'docker', 'cp', 'bindbackend'+cid+'.conf',
+    subprocess.run(['docker', 'cp', 'bindbackend'+cid+'.conf',
                     cid + '_powerdns_server:/usr/local/etc/bindbackend.conf'], check=False)
     pathlib.Path('bindbackend'+cid+'.conf').unlink()
-    subprocess.run(['sudo', 'docker', 'exec', cid + '_powerdns_server',
+    subprocess.run(['docker', 'exec', cid + '_powerdns_server',
                     'dos2unix', '/usr/local/etc/bindbackend.conf'], check=False)
-    compilezone = subprocess.run(['sudo', 'docker', 'exec', cid + '_powerdns_server', 'pdnsutil', '-v',
+    compilezone = subprocess.run(['docker', 'exec', cid + '_powerdns_server', 'pdnsutil', '-v',
                                   'check-zone', f'{origin}'],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     output = compilezone.stdout.decode("utf-8").strip().split('\n')

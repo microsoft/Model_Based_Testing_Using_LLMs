@@ -37,7 +37,7 @@ implementations[impl] = (True, implementations[impl][1])
 delete_container(f"{cid}_{impl}_server")
 
 # start new container
-subprocess.run(['sudo', 'docker', 'run', '-dp', str(implementations[impl][1] * cid) + ':53/udp',
+subprocess.run(['docker', 'run', '-dp', str(implementations[impl][1] * cid) + ':53/udp',
                                 '--name=' + str(cid) + '_' + impl + '_server', impl + tag], check=True)
 print(f"Started new {impl} container with name {cid}_{impl}_server")
 

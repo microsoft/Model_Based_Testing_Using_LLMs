@@ -2,7 +2,8 @@
 
 1. Build the image of the required implementation using:
     ```bash
-    docker build -t <image_name>:oct -f <directory_name>/Dockerfile .
+    $ cd Implementations
+    $ docker build -t <image_name>:oct -f <directory_name>/Dockerfile .
     ```
     where, the `image_name` would be `bind` and `directory_name` would be `Bind` to build a Bind image.<br>
     **Please note:**

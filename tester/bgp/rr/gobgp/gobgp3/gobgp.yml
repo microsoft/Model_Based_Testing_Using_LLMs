@@ -1,6 +1,6 @@
 global:
   config:
-    as: 100
+    as: 200
     router-id: 4.0.0.3
 neighbors:
 - afi-safis:
@@ -8,7 +8,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
   config:
     neighbor-address: 4.0.0.2
-    peer-as: 100
+    peer-as: 200
   route-reflector:
     config:
       route-reflector-client: true
