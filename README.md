@@ -1,8 +1,6 @@
 # Model-based Testing using LLMs
 
-This repsitory contains the code for our paper **Eywa: Automating Model-based Testing using LLMs**. 
-
-** Write a small introduction on our approach. **
+This repsitory contains the code for our paper **Eywa: Automating Model-based Testing using LLMs**. Our framework uses LLMs to automatically construct modular protocol models from natural-language specifications and applies symbolic execution and differential testing to generate high-coverage tests with minimal user effort.
 
 ## Installation
 First clone the repository onto your local machine.
