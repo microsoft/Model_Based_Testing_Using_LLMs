@@ -25,7 +25,7 @@ Install the required libraries. The following command ensures that **eywa** is i
 ```bash
 $ pip3 install -e .
 ```
-Now, you need to add your OpenAI API key to the **src** folder.
+Now, you need to add your OpenAI API key to the **scripts** folder.
 ```bash
 $ cd scripts
 $ touch openai_key.txt
