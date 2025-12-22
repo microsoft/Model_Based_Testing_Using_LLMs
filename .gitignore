@@ -84,3 +84,4 @@ dmypy.json
 *.txt
 !requirements.txt
 *.json
+reduce_tests.py

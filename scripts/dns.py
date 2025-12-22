@@ -8,7 +8,8 @@ import regex as re
 import eywa.run as run
 from argparse import ArgumentParser
 
-SIGCOMM = False
+NSDI = False
+output_dir_common = pathlib.Path("..//tests//dns//NSDI")
 
 def build_regex_module(maxsize=5):
     valid_dn_re = "[a-z\\*](\\.[a-z\\*])*"
@@ -103,9 +104,9 @@ def cname_match_check(runs=12):
     g.CallEdge(is_valid_inputs, [is_valid_domain_name])
     g.Pipe(is_matching_cname_record, is_valid_inputs)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//CNAME")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "CNAME"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -158,9 +159,9 @@ def dname_match_check(runs=12):
     g.CallEdge(is_valid_inputs, [is_valid_domain_name])
     g.Pipe(is_matching_dname_record, is_valid_inputs)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//DNAME")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "DNAME"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -213,9 +214,9 @@ def ipv4_match_check(runs=12):
     g.CallEdge(is_valid_inputs, [is_valid_domain_name])
     g.Pipe(is_matching_ipv4_record, is_valid_inputs)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//IPv4")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "IPv4"
+        inputs = run(g, k=runs,
                      debug=output_dir,  timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -346,9 +347,9 @@ def wildcard_match_check(runs=12):
     g.CallEdge(is_valid_inputs, [is_valid_domain_name])
     g.Pipe(is_matching_wildcard_record, is_valid_inputs)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//Wildcard")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "Wildcard"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -492,7 +493,7 @@ def valid_zone_check():
     generate_zone_query_inputs_from_zone(query_zone_tuples, output_dir)
 
 
-def full_query_lookup():
+def full_query_lookup(runs=12):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -546,9 +547,9 @@ def full_query_lookup():
     g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
     g.Pipe(dns_query_lookup, is_valid_zone_query)
 
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//FullLookup")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "FullLookup"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -569,7 +570,7 @@ def full_query_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -590,7 +591,7 @@ def full_query_lookup():
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def return_code_lookup():
+def return_code_lookup(runs=12):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -644,9 +645,9 @@ def return_code_lookup():
     g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
     g.Pipe(dns_query_lookup_rcode, is_valid_zone_query)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//RCODE")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "RCODE"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -667,7 +668,7 @@ def return_code_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -686,7 +687,7 @@ def return_code_lookup():
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def authoritative_lookup():
+def authoritative_lookup(runs=12):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -742,9 +743,9 @@ def authoritative_lookup():
     g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
     g.Pipe(dns_query_lookup_authoritative, is_valid_zone_query)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//Authoritative")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "Authoritative"
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -765,7 +766,7 @@ def authoritative_lookup():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -784,7 +785,7 @@ def authoritative_lookup():
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def loop_count():
+def loop_count(runs=12):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -842,9 +843,10 @@ def loop_count():
     g.CallEdge(is_valid_zone_query, [is_valid_domain_name])
     g.Pipe(loop_count, is_valid_zone_query)
     
-    if SIGCOMM:
-        output_dir = pathlib.Path("SIGCOMM//LoopCount")
-        inputs = run(g, k=10,
+    if NSDI:
+        output_dir = output_dir_common / "LoopCount"
+
+        inputs = run(g, k=runs,
                      debug=output_dir, timeout_sec=300)
         query_zone_tuples = []
         for input in inputs:
@@ -865,7 +867,7 @@ def loop_count():
             for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
-                inputs = run(g, k=12,
+                inputs = run(g, k=runs,
                              debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
                 query_zone_tuples = []
                 for input in inputs:
@@ -976,10 +978,10 @@ if __name__ == "__main__":
                         help="The DNS module to generate inputs for.", default="cname")
     parser.add_argument("-n", "--nsdi", action="store_true",
                         help="Generate NSDI inputs.", default=False)
-    parser.add_argument("-r", "--runs", type=int, required=True,
-                        help="Number of runs to generate inputs for.", default=12)
+    parser.add_argument("-r", "--runs", type=int, required=False,
+                        help="Number of runs to generate inputs for.", default=10)
     args = parser.parse_args()
-    SIGCOMM = args.nsdi
+    NSDI = args.nsdi
     if args.module == "cname":
         cname_match_check(args.runs)
     elif args.module == "dname":
@@ -989,12 +991,12 @@ if __name__ == "__main__":
     elif args.module == "ipv4":
         ipv4_match_check(args.runs)
     elif args.module == "full_lookup":
-        full_query_lookup()
+        full_query_lookup(args.runs)
     elif args.module == "loop_count":
-        loop_count()
+        loop_count(args.runs)
     elif args.module == "rcode":
-        return_code_lookup()
+        return_code_lookup(args.runs)
     elif args.module == "authoritative":
-        authoritative_lookup()
+        authoritative_lookup(args.runs)
     else:
         print("Invalid module selected.")
