@@ -40,4 +40,4 @@ To generate graphs on the number of runs versus the number of unique tests, as p
 $ python3 dns.py -m cname -r 12
 $ python3 plot_graphs.py --model cname --runs 12
 ```
-The available options for models are **cname**, **dname**,**ipv4** and **wildcard**.
+The available options for models are **cname**, **dname**, **ipv4** and **wildcard**.
