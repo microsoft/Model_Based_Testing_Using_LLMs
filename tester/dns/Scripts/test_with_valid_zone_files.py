@@ -127,10 +127,10 @@ def start_containers(cid: int, implementations: Dict[str, Tuple[bool, int]], tag
     for impl, (check, port) in implementations.items():
         if check:
             if impl == 'technitium':
-                subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * cid) + ':53/udp', '-p', f'{str(port * cid + 1)}:5380/tcp',
+                subprocess.run(['docker', 'run', '-dp', str(port * cid) + ':53/udp', '-p', f'{str(port * cid + 1)}:5380/tcp',
                                 '--name=' + str(cid) + '_' + impl + '_server', impl + tag], check=True)
             else:
-                subprocess.run(['sudo', 'docker', 'run', '-dp', str(port * cid) + ':53/udp',
+                subprocess.run(['docker', 'run', '-dp', str(port * cid) + ':53/udp',
                                 '--name=' + str(cid) + '_' + impl + '_server', impl + tag], check=True)
 
 
@@ -486,11 +486,11 @@ if __name__ == '__main__':
                             'implementations with each other or uses a '
                             'expected response to flag differences '
                             '(only when one implementation is passed for testing)')
-    parser.add_argument('-path', metavar='DIRECTORY_PATH', default=SUPPRESS,
+    parser.add_argument('--path', metavar='DIRECTORY_PATH', default=SUPPRESS,
                         help='The path to the directory containing ZoneFiles and '
                         'either Queries or ExpectedResponses directories.'
                         '(default: Results/ValidZoneFileTests/)')
-    parser.add_argument('-id', type=int, default=1, choices=range(1, 6),
+    parser.add_argument('--id', type=int, default=1, choices=range(1, 6),
                         help='Unique id for all the containers '
                         '(useful when running comparison in parallel).')
     parser.add_argument('-r', nargs=2, type=check_non_negative, metavar=('START', 'END'),
@@ -505,8 +505,6 @@ if __name__ == '__main__':
     parser.add_argument('-m', help='Disable MaraDns.', action="store_true")
     parser.add_argument('-t', help='Disable TrustDns.', action="store_true")
     parser.add_argument('-e', help='Disable Technitium.', action="store_true")
-    parser.add_argument(
-        '-l', '--latest', help='Test using latest image tag.', action="store_true")
 
     args = parser.parse_args()
     if "path" in args:

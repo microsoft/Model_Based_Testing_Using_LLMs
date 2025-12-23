@@ -11,8 +11,7 @@ global:
     config:
       enabled: true
       identifier: 768
-      member-as-list:
-      - 768
+      member-as-list: []
 neighbors:
 - config:
     neighbor-address: 3.0.0.3
@@ -25,8 +24,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
 - config:
     neighbor-address: 4.0.0.3
-    peer-as: 768
-    remove-private-as: all
+    peer-as: 1024
   transport:
     config:
       local-address: 4.0.0.2

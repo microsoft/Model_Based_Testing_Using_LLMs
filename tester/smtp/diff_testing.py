@@ -8,7 +8,7 @@ import os
 
 # Configuration
 test_dir = "../../tests/smtp/NSDI/SMTP"
-test_file_path = f"{test_dir}/full_test_cases_reduced.json"
+test_file_path = f"{test_dir}/full_test_cases.json"
 results_json_path = f"{test_dir}/results.json"
 diff_results_path = f"{test_dir}/diff_results.json"
 server_ip = "127.0.0.1"
