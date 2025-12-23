@@ -505,6 +505,8 @@ if __name__ == '__main__':
     parser.add_argument('-m', help='Disable MaraDns.', action="store_true")
     parser.add_argument('-t', help='Disable TrustDns.', action="store_true")
     parser.add_argument('-e', help='Disable Technitium.', action="store_true")
+    parser.add_argument('-l', '--latest', help='Test using latest image tag.',
+                        action="store_true")
 
     args = parser.parse_args()
     if "path" in args:
