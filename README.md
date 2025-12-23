@@ -92,7 +92,7 @@ To run differential testing with the generated test inputs in the previous step,
 ```bash
 $ cd dns
 ```
-Build the required DNS implementation images by following this [README](https://github.com/microsoft/Model_Based_Testing_Using_LLMs/blob/main/tester/dns/Implementations/README.md). We have the following options:
+Build the required DNS implementation images by following this [README](https://github.com/microsoft/Model_Based_Testing_Using_LLMs/blob/main/tester/dns/Implementations/README.md). For differential testing, we have the following options:
 ```bash
 $ python3 -m Scripts.test_with_valid_zone_files -h
 usage: python3 -m Scripts.test_with_valid_zone_files [-h] [-path DIRECTORY_PATH]
@@ -128,9 +128,9 @@ Results will be stored in `../../tests/dns/NSDI/{model}/Differences`.
 
 For running differential testing with BGP test inputs, first navigate to the **bgp** directory.
 ```bash
-cd bgp
+$ cd bgp
 ```
-
+Build the Docker images for BGP implementations following this [README](https://github.com/microsoft/Model_Based_Testing_Using_LLMs/blob/main/tester/bgp/README.md).
 Depending on which feature you want to test, you must `cd` to the corresponding directory. For example, if you want to test BGP confederations:
 ```bash
 $ cd confed
