@@ -18,8 +18,8 @@ def diff_test(test_file, results_file, diff_results_file):
         tests = json.load(f)
 
     # Start all three tests in parallel
-    # gobgp_proc = subprocess.run(f"cd gobgp && python main.py --test_file_path=../{test_file}", shell=True)
-    # frr_proc = subprocess.run(f"cd frr && python main.py --test_file_path=../{test_file}", shell=True)
+    gobgp_proc = subprocess.run(f"cd gobgp && python main.py --test_file_path=../{test_file}", shell=True)
+    frr_proc = subprocess.run(f"cd frr && python main.py --test_file_path=../{test_file}", shell=True)
     batfish_proc = subprocess.run(f"cd batfish && python main.py --test_file_path=../{test_file}", shell=True)
 
     # Wait for all to complete
