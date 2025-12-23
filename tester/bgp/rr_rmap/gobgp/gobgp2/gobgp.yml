@@ -1,0 +1,31 @@
+global:
+  config:
+    as: 200
+    router-id: 3.0.0.2
+neighbors:
+- afi-safis:
+  - config:
+      afi-safi-name: ipv4-unicast
+  config:
+    neighbor-address: 3.0.0.3
+    peer-as: 200
+  route-reflector:
+    config:
+      route-reflector-client: true
+      route-reflector-cluster-id: 3.0.0.2
+  transport:
+    config:
+      local-address: 3.0.0.2
+- afi-safis:
+  - config:
+      afi-safi-name: ipv4-unicast
+  config:
+    neighbor-address: 4.0.0.3
+    peer-as: 200
+  route-reflector:
+    config:
+      route-reflector-client: true
+      route-reflector-cluster-id: 4.0.0.2
+  transport:
+    config:
+      local-address: 4.0.0.2

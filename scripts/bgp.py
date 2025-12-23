@@ -8,9 +8,21 @@ import regex as re
 import eywa.run as run
 from argparse import ArgumentParser
 from termcolor import colored
+import ipaddress
 
 NSDI = False
 output_dir_common = pathlib.Path("..//tests//bgp//NSDI")
+
+def int_to_prefix(value: int, prefix_len: int) -> str:
+    """
+    Convert an integer IPv4 address and prefix length to CIDR notation.
+
+    Example:
+        int_to_prefix(1671446532, 24) -> '99.151.128.0/24'
+    """
+    ip = ipaddress.IPv4Address(value)
+    network = ipaddress.IPv4Network(f"{ip}/{prefix_len}", strict=False)
+    return str(network)
 
 def confed_check(runs=10):
     
@@ -249,9 +261,7 @@ def rmap_pl_check(runs=10):
         "Route",
         prefix = ast.Int(32),
         prefixLength = ast.Int(8),
-        nextHop = ast.Int(32),
         localPref = ast.Int(32),
-        community = ast.Array(ast.Int(32), 1),
         med = ast.Int(32)
     )
     
@@ -263,7 +273,8 @@ def rmap_pl_check(runs=10):
         "RouteMapStanza",
         matchPrefixList = pr_list,
         matchLocalPref = ast.Int(32),
-        matchMed = ast.Int(32)
+        matchMed = ast.Int(32),
+        rmapAction = ast.Bool()
     )
     
     rmap = ast.Struct(
@@ -312,9 +323,7 @@ Conditions for valiidity:
     2. The subnet mask length must be in the range 0-32.
     3. The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0.
     4. The local preference value should be in the range [100, 200].
-    5. The MED value should be in the range [20, 50].
-    6. The next hop value should be in the range 1671377732 - 1679687938.
-    7. The community value should be 0.""",
+    5. The MED value should be in the range [20, 50].""",
         [p0, p10]
     )
     
@@ -374,30 +383,26 @@ If a match is found, the function should update the Result struct's isPermitted 
         routeMap = input[1]
         # matchPrefixList is a single entry now (not an array)
         mpl = routeMap["stanza"][0]["matchPrefixList"]
+        if mpl["any"]:
+            pl_match_str = "any"
+        else:
+            pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
         test_case = {
             "route": {
-                "prefix": route["prefix"],
-                "prefixLength": route["prefixLength"],
-                "nextHop": route["nextHop"],
-                "localPref": route["localPref"],
-                "community": route["community"][0],
+                "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
+                "local_pref": route["localPref"],
                 "med": route["med"]
             },
-            "routeMap": {
-                "stanza": [
+            "rmap": {
+                "local_pref": routeMap["stanza"][0]["matchLocalPref"],
+                "med": routeMap["stanza"][0]["matchMed"],
+                "prefix_list": [
                     {
-                        "matchPrefixList": {    
-                            "prefix": mpl["prefix"],
-                            "prefixLength": mpl["prefixLength"],
-                            "le": mpl["le"],
-                            "ge": mpl["ge"],
-                            "any": mpl["any"],
-                            "permit": mpl["permit"]
-                        },
-                        "matchLocalPref": routeMap["stanza"][0]["matchLocalPref"],
-                        "matchMed": routeMap["stanza"][0]["matchMed"]
-                    }       
-                ]
+                        "match": pl_match_str,
+                        "action": "permit" if mpl["permit"] else "deny"
+                    }
+                ],
+                "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
             }
         }
         test_cases.append(test_case)
@@ -454,9 +459,7 @@ def rr_rmap_check(runs=10):
         "Route",
         prefix = ast.Int(32),
         prefixLength = ast.Int(8),
-        nextHop = ast.Int(32),
         localPref = ast.Int(32),
-        community = ast.Array(ast.Int(32), 1),
         med = ast.Int(32)
     )
     
@@ -468,7 +471,8 @@ def rr_rmap_check(runs=10):
         "RouteMapStanza",
         matchPrefixList = prefix_list,
         matchLocalPref = ast.Int(32),
-        matchMed = ast.Int(32)
+        matchMed = ast.Int(32),
+        rmapAction = ast.Bool()
     )
     
     rmap = ast.Struct(
@@ -537,9 +541,7 @@ Conditions for valiidity:
     2. The subnet mask length must be in the range 0-32.
     3. The prefix value should be greater than 0 i.e (ipaddr & subnet_mask) > 0.
     4. The local preference value should be in the range [100, 200].
-    5. The MED value should be in the range [20, 50].
-    6. The next hop value should be in the range 1671377732 - 1679687938.
-    7. The community value should be 0.""",
+    5. The MED value should be in the range [20, 50].""",
         [p_route, p_valid_route]
     )
     
@@ -628,34 +630,31 @@ If R2 receives the route, then before advertising it to other interfaces, it app
         outRRflag = input[3]
         inAS = input[4]
         outAS = input[5]
+        mpl = routeMap["stanza"][0]["matchPrefixList"]
+        if mpl["any"]:
+            pl_match_str = "any"
+        else:
+            pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
 
         # matchPrefixList is now a single entry (not an array)
         mpl = routeMap["stanza"][0]["matchPrefixList"]
 
         test_case = {
             "route": {
-                "prefix": route["prefix"],
-                "prefixLength": route["prefixLength"],
-                "nextHop": route["nextHop"],
-                "localPref": route["localPref"],
-                "community": route["community"][0],
+                "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
+                "local_pref": route["localPref"],
                 "med": route["med"]
             },
-            "routeMap": {
-                "stanza": [
+            "rmap": {
+                "local_pref": routeMap["stanza"][0]["matchLocalPref"],
+                "med": routeMap["stanza"][0]["matchMed"],
+                "prefix_list": [
                     {
-                        "matchPrefixList": {    
-                            "prefix": mpl["prefix"],
-                            "prefixLength": mpl["prefixLength"],
-                            "le": mpl["le"],
-                            "ge": mpl["ge"],
-                            "any": mpl["any"],
-                            "permit": mpl["permit"]
-                        },
-                        "matchLocalPref": routeMap["stanza"][0]["matchLocalPref"],
-                        "matchMed": routeMap["stanza"][0]["matchMed"]
+                        "match": pl_match_str,
+                        "action": "permit" if mpl["permit"] else "deny"
                     }
-                ]
+                ],
+                "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
             },
             "inRRflag": inRRflag,
             "outRRflag": outRRflag,
@@ -663,6 +662,7 @@ If R2 receives the route, then before advertising it to other interfaces, it app
             "outAS": outAS
         }
         test_cases.append(test_case)
+        
     with open(test_dir / 'tests.json', 'w') as f:
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP route reflector with route map check.")

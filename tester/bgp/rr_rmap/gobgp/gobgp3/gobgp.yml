@@ -1,0 +1,14 @@
+global:
+  config:
+    as: 200
+    router-id: 4.0.0.3
+neighbors:
+- afi-safis:
+  - config:
+      afi-safi-name: ipv4-unicast
+  config:
+    neighbor-address: 4.0.0.2
+    peer-as: 200
+  transport:
+    config:
+      local-address: 4.0.0.3
