@@ -6,7 +6,7 @@ import time
 
 ############# Paths #############
 test_dir = "../../../tests/bgp/NSDI/CONFED"
-test_file_path = f"{test_dir}/debug_test1.json"
+test_file_path = f"{test_dir}/tests.json"
 results_json_path = f"{test_dir}/results.json"
 diff_results_path = f"{test_dir}/diff_results.json"
 
