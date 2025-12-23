@@ -3,7 +3,7 @@
 #python3 gobgp_translator.py
 
 # setup the network and start the docker containers
- docker compose up -d
+docker compose up -d
 
 # command to run by forking a new process
 command_to_fork(){
@@ -18,12 +18,12 @@ command_to_fork &
 sleep 20
 
 # get the output
- docker exec -it gobgp_1 gobgp global rib > router1_RIB.txt
- docker exec -it gobgp_2 gobgp global rib > router2_RIB.txt
- docker exec -it gobgp_3 gobgp global rib > router3_RIB.txt
+docker exec -it gobgp_1 gobgp global rib > router1_RIB.txt
+docker exec -it gobgp_2 gobgp global rib > router2_RIB.txt
+docker exec -it gobgp_3 gobgp global rib > router3_RIB.txt
 
 # stop the containers and shut down the network
- docker compose down
+docker compose down
 
 # stop all child processes before exiting
 pkill -P $$
