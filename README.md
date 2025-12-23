@@ -87,7 +87,7 @@ Navigate to the **tester** directory.
 $ cd ../tester
 ```
 
-### DNS
+### DNS:
 To run differential testing with the generated test inputs in the previous step, first navigate to the **DNS** directory:
 ```bash
 $ cd dns
