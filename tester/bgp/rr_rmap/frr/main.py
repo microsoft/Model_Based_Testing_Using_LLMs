@@ -32,17 +32,20 @@ for test_case in test_cases:
     
     ## Parse Test Case
     parsed_params = parse_test_case(test_case)
-    inRRflag, outRRflag, inAS, outAS = parsed_params
-    as2 = 200; 
+    route, rmap, inRRflag, outRRflag, inAS, outAS = parsed_params
+    route_prefix = route["prefix"]
+    ase = 512 ## exabgp AS number
+    as2 = 200
     as1 = as2 if inAS else 100
     as3 = as2 if outAS else 300
 
     ## Update Configs
-    update_router1_config(as1, as2, inRRflag)
-    update_router2_config(as2, as1, as3, inRRflag, outRRflag)
+    update_exabgp_config(route, ase, as1)
+    update_router1_config(ase, as1, as2, inRRflag)
+    update_router2_config(as2, as1, as3, rmap, inRRflag, outRRflag)
     update_router3_config(as3, as2, outRRflag)
 
-    os.system("bash run.sh")
+    os.system(f"bash run.sh {route_prefix}")
 
     ### Parse RIBs ###
     isRIB2 = parse_rib("router2_RIB.txt")

@@ -18,24 +18,14 @@ def print_colored(text, color):
 
 
 def parse_test_case(test):
-    """
-    [
-        2, ## inRRflag : 0 : R2 is a client to R1 (RR), 1 : R2 is a route reflector to R1, 2 : R2 is a non-client to R1 (RR)
-        1, ## outRRflag : 0 : R2 is a client to R3 (RR), 1 : R2 is a route reflector to R3, 2 : R2 is a non-client to R3 (RR)
-        false, ## inAS : True : if AS of R2 is same as AS of R1, False : if AS of R2 is different from AS of R1
-        true, ## outAS : True : if AS of R2 is same as AS of R3, False : if AS of R2 is different from AS of R3
-        {
-            "isReceived": false, ## if route is received at R2
-            "isAdvertised": false ## if route is received at R3
-        }
-    ]
-    """
+    route = test["route"]
+    rmap = test["rmap"]
     inRRflag = test["inRRflag"]
     outRRflag = test["outRRflag"]
     inAS = test["inAS"]
     outAS = test["outAS"]
 
-    return inRRflag, outRRflag, inAS, outAS
+    return route, rmap, inRRflag, outRRflag, inAS, outAS
 
 
 def parse_rib(ribfile):
@@ -46,10 +36,64 @@ def parse_rib(ribfile):
         isRIB = False
     else:
         isRIB = True
-
     return isRIB
 
-def update_router1_config(as1, as2, inRRflag):
+def update_exabgp_config(route, ase, as1):
+
+    localPref = route["local_pref"]
+    med = route["med"]
+    route_prefix = route["prefix"]
+
+    new_config = f"""
+process announce-routes {{  
+    run python exabgp/example.py;
+    encoder json;
+}}
+
+neighbor 2.0.0.3 {{                 # Remote neighbor to peer with
+    router-id 2.0.0.2;              # Our local router-id
+    local-address 2.0.0.2;          # Our local update-source
+    local-as {ase};                    # Our local AS
+    peer-as {as1};                     # Peer's AS
+
+    api {{
+        processes [announce-routes];
+    }}
+}}
+    """
+
+    with open("exabgp1/conf.ini", "w") as f:
+        f.write(new_config)
+
+    example_py_lines = f"""
+#!/usr/bin/env python3
+
+from __future__ import print_function
+
+from sys import stdout
+from time import sleep
+
+messages = [
+    "announce route {route_prefix} next-hop self local-preference {localPref} med {med}",
+]
+
+sleep(5)
+
+#Iterate through messages
+for message in messages:
+    stdout.write(message + '\\n')
+    stdout.flush()
+    sleep(1)
+
+#Loop endlessly to allow ExaBGP to continue running
+while True:
+    sleep(1)
+"""
+    with open("exabgp1/example.py", "w") as f:
+        f.write(example_py_lines)     
+
+
+def update_router1_config(ase, as1, as2, inRRflag):
     # rr_config = "neighbor 3.0.0.2 route-reflector-client" if inRRflag else ""
 
     if inRRflag == 0: ## R2 is a client to R1 (RR) --> R1 is a RR, R2 is a client
@@ -65,17 +109,14 @@ router bgp {as1}
  no bgp network import-check
  bgp router-id 3.0.0.3
  neighbor 3.0.0.2 remote-as {as2}
+ neighbor 2.0.0.2 remote-as {ase}
  {rr_config}
- network 100.0.0.0/8"""
+"""
 
     with open("frr1/frr.conf", "w") as f:
         f.write(new_config)
 
-def update_router2_config(as2, as1, as3, inRRflag, outRRflag):
-    # rr_config = "neighbor 3.0.0.3 route-reflector-client" if rr_to_r1 else ""
-    # client_config = "neighbor 3.0.0.3 route-server-client" if client_to_r1 else ""
-    # rr_config3 = "neighbor 4.0.0.3 route-reflector-client" if rr_to_r3 else ""
-    # client_config3 = "neighbor 4.0.0.3 route-server-client" if client_to_r3 else ""
+def update_router2_config(as2, as1, as3, rmap, inRRflag, outRRflag):
 
     if inRRflag == 0: ## R2 is a client to R1 (RR) --> R1 is a RR, R2 is a client
         in_rr_config = ""
@@ -91,17 +132,43 @@ def update_router2_config(as2, as1, as3, inRRflag, outRRflag):
     elif outRRflag == 2: ## R2 is a non-client to R3 (RR)
         out_rr_config = ""
 
+    pfxl_def = ""
+
+    if "prefix_list" in rmap and rmap["prefix_list"] != []:
+        prefix_list = rmap["prefix_list"]
+        for prefix in prefix_list:
+            pfxl_def += f"ip prefix-list PFXL {prefix['action']} {prefix['match']}\n"
+
+    lp_match = f"  match local-preference {rmap['local_pref']}" if "local_pref" in rmap else ""
+    med_match = f"  match metric {rmap['med']}" if "med" in rmap else ""
+    prefix_match = f"  match ip address prefix-list PFXL" if (("prefix_list" in rmap) and (rmap["prefix_list"] != [])) else ""
+
 
     new_config = f"""
-router bgp {as2}
- no bgp ebgp-requires-policy
- no bgp network import-check
- bgp router-id 3.0.0.2
- neighbor 3.0.0.3 remote-as {as1}
- {in_rr_config}
- neighbor 4.0.0.3 remote-as {as3}
- {out_rr_config}
-    """
+debug bgp updates
+log file /var/log/frr/bgpd.log
+
+{pfxl_def}
+route-map RMap {rmap["rmap_action"]} 10
+{prefix_match}
+{lp_match}
+{med_match}
+
+router bgp {as2} 
+  no bgp ebgp-requires-policy 
+  no bgp network import-check
+  neighbor 3.0.0.3 remote-as {as1}
+  {in_rr_config}
+  neighbor 4.0.0.3 remote-as {as3}
+  {out_rr_config}
+  neighbor 4.0.0.3 route-map RMap out
+  neighbor 3.0.0.3 soft-reconfiguration inbound
+  neighbor 4.0.0.3 soft-reconfiguration outbound
+  network 3.0.0.0
+  network 4.0.0.0
+exit
+!
+"""
 
     with open("frr2/frr.conf", "w") as f:
         f.write(new_config)

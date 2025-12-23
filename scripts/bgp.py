@@ -431,7 +431,7 @@ def rr_rmap_check(runs=10):
         True : if AS of R2 is same as AS of R3
         False : if AS of R2 is different from AS of R3
 
-    5. outRmap: outbound Route map to be applied on the advertised route before advertising to neighbor
+    5. outRmap: outbound Route map to be applied on the advertised route from R2 before advertising to R3
 
     6. inRoute: Route to be matched
 

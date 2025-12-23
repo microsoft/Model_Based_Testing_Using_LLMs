@@ -119,8 +119,6 @@ while True:
         f.write(example_py_lines)     
     
 def update_frr_config(rmap):
-
-
     pfxl_def = ""
 
     if "prefix_list" in rmap and rmap["prefix_list"] != []:
