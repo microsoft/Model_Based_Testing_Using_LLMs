@@ -21,17 +21,17 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp',
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp',
                         '--name=' + cname, 'bind' + tag],
                        stdout=subprocess.PIPE, check=False)
     else:
         # Kill the running server instance inside the container
         subprocess.run(
-            ['docker', 'exec', cname, 'pkill', 'named'], check=False)
+            ['sudo', 'docker', 'exec', cname, 'pkill', 'named'], check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file), cname +
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file), cname +
                     ':/usr/local/etc'], stdout=subprocess.PIPE, check=False)
     # Create the Bind-specific configuration file
     named = f'''
@@ -48,12 +48,12 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     with open('named_'+cname+'.conf', 'w') as file_pointer:
         file_pointer.write(named)
     # Copy the configuration file into the container as "named.conf"
-    subprocess.run(['docker', 'cp', 'named_'+cname+'.conf', cname +
+    subprocess.run(['sudo', 'docker', 'cp', 'named_'+cname+'.conf', cname +
                     ':/usr/local/etc/named.conf'], stdout=subprocess.PIPE, check=False)
     pathlib.Path('named_'+cname+'.conf').unlink()
     # Start the server - When 'named' is run, Bind first reads the "named.conf" file to know
     #                   the settings and where the zone files are
-    subprocess.run(['docker', 'exec', cname, 'named'],
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'named'],
                    stdout=subprocess.PIPE, check=False)
-    subprocess.run(['docker', 'exec', cname, 'rndc', 'flush'],
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'rndc', 'flush'],
                    stdout=subprocess.PIPE, check=False)

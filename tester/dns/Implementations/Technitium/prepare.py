@@ -28,16 +28,16 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
                         '--name=' + cname, "technitium" + tag], check=True)
     else:
         # Stop the running server instance inside the container
-        subprocess.run(['docker', 'exec', cname, 'pkill', '-9', '-f', 'DnsServerApp.dll'],
+        subprocess.run(['sudo', 'docker', 'exec', cname, 'pkill', '-9', '-f', 'DnsServerApp.dll'],
                        stdout=subprocess.PIPE, check=False)
     # Start the server
-    subprocess.Popen(['docker', 'exec', cname, 'dotnet',
+    subprocess.Popen(['sudo', 'docker', 'exec', cname, 'dotnet',
                      'DnsServer/DnsServerApp/bin/Release/publish/DnsServerApp.dll'], stdout=DEVNULL, stderr=DEVNULL)
     time.sleep(2)
 

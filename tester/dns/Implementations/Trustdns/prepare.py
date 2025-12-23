@@ -21,16 +21,16 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp',
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp',
                         '--name=' + cname, 'trustdns' + tag], stdout=subprocess.PIPE, check=False)
     else:
         # Kill the running server instance inside the container
         subprocess.run(
-            ['docker', 'exec', cname, 'pkill', 'named'], stdout=subprocess.PIPE, check=False)
+            ['sudo', 'docker', 'exec', cname, 'pkill', 'named'], stdout=subprocess.PIPE, check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file), cname +
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file), cname +
                     ':trust-dns/tests/test-data/named_test_configs/'],
                    stdout=subprocess.PIPE, check=False)
     # Create the TrustDNS-specific configuration file
@@ -38,12 +38,12 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     with open(cname + '_config.toml', 'w') as file_pointer:
         file_pointer.write(config)
     # Copy the configuration file into the container as "config.toml"
-    subprocess.run(['docker', 'cp', cname + '_config.toml', cname +
+    subprocess.run(['sudo', 'docker', 'cp', cname + '_config.toml', cname +
                     ':trust-dns/tests/test-data/named_test_configs/config.toml'],
                    stdout=subprocess.PIPE, check=False)
     pathlib.Path(cname + '_config.toml').unlink()
     # Start the server
-    subprocess.run(['docker', 'exec', '-d', cname, '/trust-dns/target/release/named', '-c',
+    subprocess.run(['sudo', 'docker', 'exec', '-d', cname, '/trust-dns/target/release/named', '-c',
                     '/trust-dns/tests/test-data/named_test_configs/config.toml',
                     '-z', '/trust-dns/tests/test-data/named_test_configs'],
                    stdout=subprocess.PIPE, check=False)

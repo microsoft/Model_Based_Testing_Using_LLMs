@@ -21,25 +21,25 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp', '--name=' +
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp', '--name=' +
                         cname, 'coredns' + tag], stdout=subprocess.PIPE, check=False)
     else:
         # Kill the running server instance inside the container
-        subprocess.run(['docker', 'exec', cname, 'pkill',
+        subprocess.run(['sudo', 'docker', 'exec', cname, 'pkill',
                         'coredns'], stdout=subprocess.PIPE, check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file), cname +
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file), cname +
                     ':/go/coredns'], stdout=subprocess.PIPE, check=False)
     # Create the CoreDNS-specific configuration file
     corefile = f'{zone_domain}:53 {{\n\tfile {zone_file.name}\n\tlog\n\terrors\n}}'
     with open('Corefile_' + cname, 'w') as file_pointer:
         file_pointer.write(corefile)
     # Copy the configuration file into the container as "Corefile"
-    subprocess.run(['docker', 'cp', 'Corefile_' + cname, cname +
+    subprocess.run(['sudo', 'docker', 'cp', 'Corefile_' + cname, cname +
                     ':/go/coredns/Corefile'], stdout=subprocess.PIPE, check=False)
     pathlib.Path('Corefile_' + cname).unlink()
     # Start the server
-    subprocess.run(['docker', 'exec', '-d', cname, './coredns'],
+    subprocess.run(['sudo', 'docker', 'exec', '-d', cname, './coredns'],
                    stdout=subprocess.PIPE, check=False)

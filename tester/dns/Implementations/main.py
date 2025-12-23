@@ -59,7 +59,7 @@ def load_and_serve_zone_file(zone_file: pathlib.Path,
         image += tag
         # Check if the docker image exists.
         check_image = subprocess.run(
-            ['docker', 'inspect', image], stdout=subprocess.PIPE, check=False)
+            ['sudo', 'docker', 'inspect', image], stdout=subprocess.PIPE, check=False)
         # Exit from the module if the user input implementation image name does not exist
         if check_image.returncode != 0:
             sys.exit(
@@ -78,7 +78,7 @@ def load_and_serve_zone_file(zone_file: pathlib.Path,
 
     # Check if a container with the input name is running.
     check_status = subprocess.run(
-        ['docker', 'ps', '-a', '--format', '"{{.Names}} {{.Status}}"'],
+        ['sudo', 'docker', 'ps', '-a', '--format', '"{{.Names}} {{.Status}}"'],
         stdout=subprocess.PIPE, check=False)
     output = check_status.stdout.decode("utf-8")
     container_status = {}  # type: Dict[str, str]
@@ -94,17 +94,17 @@ def load_and_serve_zone_file(zone_file: pathlib.Path,
                     f'Error: Cannot start a container with name {cname} as it exists already')
             else:
                 if technitium:
-                    start_container = subprocess.run(['docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
+                    start_container = subprocess.run(['sudo', 'docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
                                                       '--name=' + cname, image], stdout=subprocess.PIPE, check=True)
                 else:
-                    start_container = subprocess.run(['docker', 'run', '-dp', str(
+                    start_container = subprocess.run(['sudo', 'docker', 'run', '-dp', str(
                         port) + ':53/udp', '--name=' + cname, image], stdout=subprocess.PIPE, check=False)
         else:
             if technitium:
-                start_container = subprocess.run(['docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
+                start_container = subprocess.run(['sudo', 'docker', 'run', '-dp', str(port) + ':53/udp', '-p', f'{str(port + 1)}:5380/tcp',
                                                   image], stdout=subprocess.PIPE, check=True)
             else:
-                start_container = subprocess.run(['docker', 'run', '-dp', str(port) + ':53/udp',
+                start_container = subprocess.run(['sudo', 'docker', 'run', '-dp', str(port) + ':53/udp',
                                                   image], stdout=subprocess.PIPE, check=False)
         if start_container.returncode != 0:
             sys.exit(f'Unable to a start a container for {image}')
@@ -113,7 +113,7 @@ def load_and_serve_zone_file(zone_file: pathlib.Path,
         if not cname or cname not in output:
             sys.exit(f'No container exists with the name: {cname}')
     # Get name of the container
-    get_name = subprocess.run(['docker', 'inspect', '--format',
+    get_name = subprocess.run(['sudo', 'docker', 'inspect', '--format',
                                '"{{.Name}} {{.Config.Image}}"', cid],
                               stdout=subprocess.PIPE, check=False)
     if get_name.returncode != 0:

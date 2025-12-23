@@ -21,17 +21,17 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp', '--name=' +
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp', '--name=' +
                         cname, 'knot' + tag], stdout=subprocess.PIPE, check=False)
     else:
         # Stop the running server instance inside the container
-        subprocess.run(['docker', 'exec', cname, 'knotc', '-c',
+        subprocess.run(['sudo', 'docker', 'exec', cname, 'knotc', '-c',
                         '/usr/local/etc/knot/knot.conf', 'stop'],
                        stdout=subprocess.PIPE, check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file), cname +
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file), cname +
                     ':/usr/local/var/lib/knot/'], stdout=subprocess.PIPE, check=False)
     # Create the Knot-specific configuration file
     knot_conf = 'server:\n    listen: 0.0.0.0@53\n    listen: ::@53\n    rundir: "/usr/local/var/run/knot"\n\n'
@@ -40,13 +40,13 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     with open('knot_'+cname+'.conf', 'w') as file_pointer:
         file_pointer.write(knot_conf)
     # Copy the configuration file into the container as "knot.conf"
-    subprocess.run(['docker', 'cp', 'knot_'+cname+'.conf',
+    subprocess.run(['sudo', 'docker', 'cp', 'knot_'+cname+'.conf',
                     cname + ':/usr/local/etc/knot/knot.conf'], stdout=subprocess.PIPE, check=False)
     pathlib.Path('knot_'+cname+'.conf').unlink()
     # Convert the zone file to Unix style (CRLF to LF)
-    subprocess.run(['docker', 'exec', cname, 'dos2unix', '/usr/local/var/lib/knot/' +
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'dos2unix', '/usr/local/var/lib/knot/' +
                     zone_file.name], stdout=subprocess.PIPE, check=False)
     
     # Start the server
-    subprocess.run(['docker', 'exec', cname, 'knotd', '-d', '-c',
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'knotd', '-d', '-c',
                     '/usr/local/etc/knot/knot.conf'], stdout=subprocess.PIPE, check=False)

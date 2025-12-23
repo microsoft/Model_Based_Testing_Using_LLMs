@@ -23,16 +23,16 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp',
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp',
                         '--name=' + cname, 'nsd' + tag], stdout=subprocess.PIPE, check=False)
     else:
         # Stop the running server instance inside the container
         subprocess.run(
-            ['docker', 'exec', cname, 'nsd-control', 'stop'], stdout=subprocess.PIPE, check=False)
+            ['sudo', 'docker', 'exec', cname, 'nsd-control', 'stop'], stdout=subprocess.PIPE, check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file),
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file),
                     cname + ':/etc/nsd/zones'], stdout=subprocess.PIPE, check=False)
     # Create the NSD-specific configuration file
     nsd_conf = f'''
@@ -56,9 +56,9 @@ zone:
     with open('nsd_'+cname+'.conf', 'w') as tmp:
         tmp.write(nsd_conf)
     # Copy the configuration file into the container as "nsd.conf"
-    subprocess.run(['docker', 'cp', 'nsd_'+cname+'.conf',
+    subprocess.run(['sudo', 'docker', 'cp', 'nsd_'+cname+'.conf',
                     cname + ':/etc/nsd/nsd.conf'], stdout=subprocess.PIPE, check=False)
     pathlib.Path('nsd_'+cname+'.conf').unlink()
     # Start the server
-    subprocess.run(['docker', 'exec', cname, 'nsd-control',
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'nsd-control',
                     'start'], stdout=subprocess.PIPE, check=False)

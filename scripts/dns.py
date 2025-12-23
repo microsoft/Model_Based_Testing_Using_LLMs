@@ -81,13 +81,13 @@ def cname_match_check(runs=12):
 
     def create_cname_zone(input: Tuple) -> Tuple[List[dict], str]:
         query_name, zone_record_name = input[0], input[1]
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
         if zone_record_name == "": zone_record_name = "b"
-        zone_file += f'{zone_record_name}.test.\t500\tIN\tCNAME\tsome.domain.\n'
+        zone_file += f'{zone_record_name}.campus.edu.\t500\tIN\tCNAME\tsome.domain.\n'
         queries = []
-        queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
-        queries.append({"Name": query_name + ".test.", "Type": "TXT"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "CNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "TXT"})
         return (queries, zone_file)
 
     is_matching_cname_record = ast.Function(
@@ -137,13 +137,13 @@ def dname_match_check(runs=12):
 
     def create_dname_zone(input: Tuple) -> Tuple[List[dict], str]:
         query_name, zone_record_name = input[0], input[1]
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
         if zone_record_name == "": zone_record_name = "b"
-        zone_file += f'{zone_record_name}.test.\t500\tIN\tDNAME\tsome.domain.\n'
+        zone_file += f'{zone_record_name}.campus.edu.\t500\tIN\tDNAME\tsome.domain.\n'
         queries = []
-        queries.append({"Name": query_name + ".test.", "Type": "DNAME"})
-        queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "DNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "CNAME"})
         return (queries, zone_file)
 
     is_matching_dname_record = ast.Function(
@@ -192,13 +192,13 @@ def ipv4_match_check(runs=12):
 
     def create_ipv4_zone(input: Tuple) -> Tuple[List[dict], str]:
         query_name, zone_record_name = input[0], input[1]
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
         if zone_record_name == "": zone_record_name = "b"
-        zone_file += f'{zone_record_name}.test.\t500\tIN\tA\t1.1.1.1\n'
+        zone_file += f'{zone_record_name}.campus.edu.\t500\tIN\tA\t1.1.1.1\n'
         queries = []
-        queries.append({"Name": query_name + ".test.", "Type": "A"})
-        queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "A"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "CNAME"})
         return (queries, zone_file)
 
     is_matching_ipv4_record = ast.Function(
@@ -249,12 +249,12 @@ def ipv4_match_check_no_precondition():
 
     def create_ipv4_zone(input: Tuple) -> Tuple[List[dict], str]:
         query_name, zone_record_name = input[0], input[1]
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
-        zone_file += f'{zone_record_name}.test.\t500\tIN\tA\t1.1.1.1\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file += f'{zone_record_name}.campus.edu.\t500\tIN\tA\t1.1.1.1\n'
         queries = []
-        queries.append({"Name": query_name + ".test.", "Type": "A"})
-        queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "A"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "CNAME"})
         return (queries, zone_file)
 
     is_matching_ipv4_record = ast.Function(
@@ -326,13 +326,13 @@ def wildcard_match_check(runs=12):
 
     def create_wildcard_zone(input: Tuple) -> Tuple[List[dict], str]:
         query_name, zone_record_name = input[0], input[1]
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
         if zone_record_name == "": zone_record_name = "b"
-        zone_file += f'{zone_record_name}.test.\t500\tIN\tA\t1.1.1.1\n'
+        zone_file += f'{zone_record_name}.campus.edu.\t500\tIN\tA\t1.1.1.1\n'
         queries = []
-        queries.append({"Name": query_name + ".test.", "Type": "A"})
-        queries.append({"Name": query_name + ".test.", "Type": "CNAME"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "A"})
+        queries.append({"Name": query_name + ".campus.edu.", "Type": "CNAME"})
         return (queries, zone_file)
 
     is_matching_wildcard_record = ast.Function(
@@ -429,14 +429,14 @@ def create_zone(input: List) -> Tuple[List[dict], str]:
         formatted_records.add((record_name[0], rtype, rdata))
     if not found_soa:
         # All the records and query will be guaranteed to be in the same zone
-        zone_file = 'test.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
-        zone_file += 'test.\t500\tIN\tNS\tns1.outside.edu.\n'
+        zone_file = 'campus.edu.\t500\tIN\tSOA\tns1.outside.edu. root.campus.edu. 8 6048 4000 2419200 6048\n'
+        zone_file += 'campus.edu.\t500\tIN\tNS\tns1.outside.edu.\n'
         for record in formatted_records:
             rdata = record[2]
             if record[1] in ["CNAME", "DNAME", "NS"]:
-                rdata = record[2] + ".test."
-            zone_file += f'{record[0]}.test.\t500\tIN\t{record[1]}\t{rdata}\n'
-        zone_origin = "test."
+                rdata = record[2] + ".campus.edu."
+            zone_file += f'{record[0]}.campus.edu.\t500\tIN\t{record[1]}\t{rdata}\n'
+        zone_origin = "campus.edu."
     else:
         zone_file = ""
         # Some records might be out-of-zone which most implementations ignore
@@ -557,9 +557,9 @@ def full_query_lookup(runs=12):
             queries = []
             query_name = input[1]["domain_name"]
             query_type = input[1]["record_type"]
-            if zone_origin == "test.":
+            if zone_origin == "campus.edu.":
                 queries.append(
-                    {"Name": query_name + ".test.", "Type": query_type})
+                    {"Name": query_name + ".campus.edu.", "Type": query_type})
             else:
                 queries.append({"Name": query_name, "Type": query_type})
             query_zone_tuples.append((queries, zone_file))
@@ -579,9 +579,9 @@ def full_query_lookup(runs=12):
                     queries = []
                     query_name = input[1]["domain_name"]
                     query_type = input[1]["record_type"]
-                    if zone_origin == "test.":
+                    if zone_origin == "campus.edu.":
                         queries.append(
-                            {"Name": query_name + ".test.", "Type": query_type})
+                            {"Name": query_name + ".campus.edu.", "Type": query_type})
                     else:
                         queries.append(
                             {"Name": query_name, "Type": query_type})
@@ -655,9 +655,9 @@ def return_code_lookup(runs=12):
             queries = []
             query_name = input[1]["domain_name"]
             query_type = input[1]["record_type"]
-            if zone_origin == "test.":
+            if zone_origin == "campus.edu.":
                 queries.append(
-                    {"Name": query_name + ".test.", "Type": query_type})
+                    {"Name": query_name + ".campus.edu.", "Type": query_type})
             else:
                 queries.append({"Name": query_name, "Type": query_type})
             query_zone_tuples.append((queries, zone_file))
@@ -676,9 +676,9 @@ def return_code_lookup(runs=12):
                     queries = []
                     query_name = input[1]["domain_name"]
                     query_type = input[1]["record_type"]
-                    if zone_origin == "test.":
+                    if zone_origin == "campus.edu.":
                         queries.append(
-                            {"Name": query_name + ".test.", "Type": query_type})
+                            {"Name": query_name + ".campus.edu.", "Type": query_type})
                     else:
                         queries.append(
                             {"Name": query_name, "Type": query_type})
@@ -753,9 +753,9 @@ def authoritative_lookup(runs=12):
             queries = []
             query_name = input[1]["domain_name"]
             query_type = input[1]["record_type"]
-            if zone_origin == "test.":
+            if zone_origin == "campus.edu.":
                 queries.append(
-                    {"Name": query_name + ".test.", "Type": query_type})
+                    {"Name": query_name + ".campus.edu.", "Type": query_type})
             else:
                 queries.append({"Name": query_name, "Type": query_type})
             query_zone_tuples.append((queries, zone_file))
@@ -774,9 +774,9 @@ def authoritative_lookup(runs=12):
                     queries = []
                     query_name = input[1]["domain_name"]
                     query_type = input[1]["record_type"]
-                    if zone_origin == "test.":
+                    if zone_origin == "campus.edu.":
                         queries.append(
-                            {"Name": query_name + ".test.", "Type": query_type})
+                            {"Name": query_name + ".campus.edu.", "Type": query_type})
                     else:
                         queries.append(
                             {"Name": query_name, "Type": query_type})
@@ -812,9 +812,9 @@ def loop_count(runs=12):
         "For example, consider the zone file:\n"
         "  foo.com. 500 IN SOA ns1.outside.edu. root.campus.edu. 8 6048 86400 2419200 6048\n"
         "  bar.foo.com. 500 IN CNAME other.foo.com.\n"
-        "  *.foo.com. 500 IN CNAME test.foo.com.\n"
-        "  test.foo.com. 500 IN A 1.2.3.4\n"
-        "The query <bar.foo.com., A> will be first rewritten to <other.foo.com., A>, which will  be next rewritten to <test.foo.com., A> using wildcard CNAME record and resolved eventually to IP address 1.2.3.4. "
+        "  *.foo.com. 500 IN CNAME campus.edu.foo.com.\n"
+        "  campus.edu.foo.com. 500 IN A 1.2.3.4\n"
+        "The query <bar.foo.com., A> will be first rewritten to <other.foo.com., A>, which will  be next rewritten to <campus.edu.foo.com., A> using wildcard CNAME record and resolved eventually to IP address 1.2.3.4. "
         "The function should return 2 as the query is rewritten twice.",
         [zone_parameter, query_parameter, response_parameter],
         # precondition=zone_parameter.forall(
@@ -854,9 +854,9 @@ def loop_count(runs=12):
             queries = []
             query_name = input[1]["domain_name"]
             query_type = input[1]["record_type"]
-            if zone_origin == "test.":
+            if zone_origin == "campus.edu.":
                 queries.append(
-                    {"Name": query_name + ".test.", "Type": query_type})
+                    {"Name": query_name + ".campus.edu.", "Type": query_type})
             else:
                 queries.append({"Name": query_name, "Type": query_type})
             query_zone_tuples.append((queries, zone_file))
@@ -875,9 +875,9 @@ def loop_count(runs=12):
                     queries = []
                     query_name = input[1]["domain_name"]
                     query_type = input[1]["record_type"]
-                    if zone_origin == "test.":
+                    if zone_origin == "campus.edu.":
                         queries.append(
-                            {"Name": query_name + ".test.", "Type": query_type})
+                            {"Name": query_name + ".campus.edu.", "Type": query_type})
                     else:
                         queries.append(
                             {"Name": query_name, "Type": query_type})
@@ -952,8 +952,8 @@ def zonecut():
         queries = []
         query_name = input[1]["domain_name"]
         query_type = input[1]["record_type"]
-        if zone_origin == "test.":
-            queries.append({"Name": query_name + ".test.", "Type": query_type})
+        if zone_origin == "campus.edu.":
+            queries.append({"Name": query_name + ".campus.edu.", "Type": query_type})
         else:
             queries.append({"Name": query_name, "Type": query_type})
         query_zone_tuples.append((queries, zone_file))

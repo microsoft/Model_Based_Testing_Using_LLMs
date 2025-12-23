@@ -94,7 +94,7 @@ def remove_container(cid: int) -> None:
     """
     # Get the list of containers
     cmd_status = subprocess.run(
-        ['docker', 'ps', '-a', '--format', '"{{.Names}}"'], stdout=subprocess.PIPE, check=False)
+        ['sudo', 'sudo', 'docker', 'ps', '-a', '--format', '"{{.Names}}"'], stdout=subprocess.PIPE, check=False)
     output = cmd_status.stdout.decode("utf-8")
     if cmd_status.returncode != 0:
         sys.exit(f'Error in executing Docker ps command: {output}')
@@ -106,7 +106,7 @@ def remove_container(cid: int) -> None:
         try:
             print("### Trying to remove container: ", str(cid) + server)
             if str(cid) + server in all_container_names:
-                subprocess.run(['docker', 'container', 'rm', str(cid) + server, '-f'],
+                subprocess.run(['sudo', 'sudo', 'docker', 'container', 'rm', str(cid) + server, '-f'],
                             stdout=subprocess.PIPE, check=True)
         except:
             delete_container(str(cid) + server)
@@ -127,10 +127,10 @@ def start_containers(cid: int, implementations: Dict[str, Tuple[bool, int]], tag
     for impl, (check, port) in implementations.items():
         if check:
             if impl == 'technitium':
-                subprocess.run(['docker', 'run', '-dp', str(port * cid) + ':53/udp', '-p', f'{str(port * cid + 1)}:5380/tcp',
+                subprocess.run(['sudo', 'sudo', 'docker', 'run', '-dp', str(port * cid) + ':53/udp', '-p', f'{str(port * cid + 1)}:5380/tcp',
                                 '--name=' + str(cid) + '_' + impl + '_server', impl + tag], check=True)
             else:
-                subprocess.run(['docker', 'run', '-dp', str(port * cid) + ':53/udp',
+                subprocess.run(['sudo', 'sudo', 'docker', 'run', '-dp', str(port * cid) + ':53/udp',
                                 '--name=' + str(cid) + '_' + impl + '_server', impl + tag], check=True)
 
 

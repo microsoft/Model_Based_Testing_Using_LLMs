@@ -25,16 +25,16 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
     :param tag: The image tag to be used if restarting the container
     """
     if restart:
-        subprocess.run(['docker', 'container', 'rm', cname, '-f'],
+        subprocess.run(['sudo', 'docker', 'container', 'rm', cname, '-f'],
                        stdout=subprocess.PIPE, check=False)
-        subprocess.run(['docker', 'run', '-dp', str(port)+':53/udp',
+        subprocess.run(['sudo', 'docker', 'run', '-dp', str(port)+':53/udp',
                         '--name=' + cname, 'maradns' + tag], stdout=subprocess.PIPE, check=False)
     else:
         # Stop the running server instance inside the container
-        subprocess.run(['docker', 'exec', cname,
+        subprocess.run(['sudo', 'docker', 'exec', cname,
                         '/etc/init.d/maradns', 'stop'], stdout=subprocess.PIPE, check=False)
     # Copy the new zone file into the container
-    subprocess.run(['docker', 'cp', str(zone_file),
+    subprocess.run(['sudo', 'docker', 'cp', str(zone_file),
                     cname + ':/etc/maradns'], stdout=subprocess.PIPE, check=False)
     # Shell script to run inside the container to generate the "mararc" configuration file
     # It has to be run in the container to get the container interface IP to which the
@@ -45,18 +45,18 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
 
     with open(cname + '_mararc.sh', 'w') as file_pointer:
         file_pointer.write(mararc)
-    subprocess.run(['docker', 'cp', cname + '_mararc.sh',
+    subprocess.run(['sudo', 'docker', 'cp', cname + '_mararc.sh',
                     cname + ':/etc/mararc.sh'], check=False)
     pathlib.Path(cname + '_mararc.sh').unlink()
     # Give executable permissions to the copied script
-    subprocess.run(['docker', 'exec', cname,
+    subprocess.run(['sudo', 'docker', 'exec', cname,
                     'chmod', '+x', '/etc/mararc.sh'], stdout=subprocess.PIPE, check=False)
     # Covnert the zone file into CSV2 format using the python script
-    subprocess.run(['docker', 'exec', cname, 'python3', 'tocsv2.py',
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'python3', 'tocsv2.py',
                     f'/etc/maradns/{zone_file.name}'], stdout=subprocess.PIPE, check=False)
     # Generate the configuration file using the shell script
-    subprocess.run(['docker', 'exec', cname, 'sh',
+    subprocess.run(['sudo', 'docker', 'exec', cname, 'sh',
                     '-c', './etc/mararc.sh > /etc/mararc'], stdout=subprocess.PIPE, check=False)
     # Start the server
-    subprocess.run(['docker', 'exec', cname,
+    subprocess.run(['sudo', 'docker', 'exec', cname,
                     '/etc/init.d/maradns', 'start'], stdout=subprocess.PIPE, check=False)
