@@ -673,12 +673,12 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--module", type=str, required=True,
                         choices=["confed", "rr", "rmap_pl", "rr_rmap"],
                         help="The BGP module to generate inputs for.", default="confed")
-    parser.add_argument("-n", "--nsdi", action="store_true",
-                        help="Generate NSDI inputs.", default=False)
+    # parser.add_argument("-n", "--nsdi", action="store_true",
+    #                     help="Generate NSDI inputs.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
     args = parser.parse_args()
-    NSDI = args.nsdi
+    # NSDI = args.nsdi
     if args.module == "confed":
         confed_check(args.runs)
     elif args.module == "rr":

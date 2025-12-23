@@ -178,12 +178,12 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--module", type=str, required=True,
                         choices=["server"],
                         help="The SMTP module to generate inputs for.", default="server")
-    parser.add_argument("-n", "--nsdi", action="store_true",
-                        help="Generate NSDI inputs.", default=False)
+    # parser.add_argument("-n", "--nsdi", action="store_true",
+    #                     help="Generate NSDI inputs.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
     args = parser.parse_args()
-    NSDI = args.nsdi
+    # NSDI = args.nsdi
     if args.module == "server":
         server_check(args.runs)
     else:
