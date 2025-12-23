@@ -157,7 +157,7 @@ $ sudo pip3 install aiosmtpd
 
 Run the following command:
 ```bash
-$ python3 diff_testing.py
+$ sudo python3 diff_testing.py
 ```
 
 Results will be saved in test directory i.e. `../../tests/smtp/NSDI/SMTP`
