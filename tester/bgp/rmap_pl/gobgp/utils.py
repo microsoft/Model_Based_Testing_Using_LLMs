@@ -73,20 +73,6 @@ while True:
 """
     with open("exabgp1/example.py", "w") as f:
         f.write(example_py_lines)
-   
-def parse_ple(ple):
-    ple_match = ple["match"]
-    ple_match_split = ple_match.split(" ")
-    ple_prefix = ple_match_split[0].split("/")[0]
-    ple_mask = int(ple_match_split[0].split("/")[1]) if "/" in ple_match_split[0] else ""
-    ple_le = 32
-    if "le" in ple_match:
-        ple_le = int(ple_match_split[ple_match_split.index("le")+1])
-    ple_ge = int(ple_match_split[ple_match_split.index("ge")+1]) if "ge" in ple_match else ple_mask
-    ple_permit = True if ple["action"] == "permit" else False
-    return ple_prefix, ple_mask, ple_le, ple_ge, ple_permit
-
-
 
 def update_gobgp_config(data):
 
@@ -255,6 +241,18 @@ def update_gobgp_config(data):
     with open("gobgp2/gobgp.yml", "a") as f:
         yaml.dump(d, f)
 
+
+def parse_ple(ple):
+    ple_match = ple["match"]
+    ple_match_split = ple_match.split(" ")
+    ple_prefix = ple_match_split[0].split("/")[0]
+    ple_mask = int(ple_match_split[0].split("/")[1]) if "/" in ple_match_split[0] else ""
+    ple_le = 32
+    if "le" in ple_match:
+        ple_le = int(ple_match_split[ple_match_split.index("le")+1])
+    ple_ge = int(ple_match_split[ple_match_split.index("ge")+1]) if "ge" in ple_match else ple_mask
+    ple_permit = True if ple["action"] == "permit" else False
+    return ple_prefix, ple_mask, ple_le, ple_ge, ple_permit
 
 def parse_rib(ribfile):
     with open(ribfile,"r") as f:

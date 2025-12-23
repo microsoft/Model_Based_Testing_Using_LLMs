@@ -17,7 +17,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
   config:
     neighbor-address: 2.0.0.2
-    peer-as: 65000
+    peer-as: 512
   transport:
     config:
       local-address: 2.0.0.3

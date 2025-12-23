@@ -7,6 +7,7 @@ import time
 from IPython.display import display
 import glob
 import os
+import ipaddress
 from pandas.io.formats.style import Styler
 from pybatfish.client.session import Session
 from pybatfish.datamodel import *
@@ -54,11 +55,11 @@ def run_batfish_example():
     
     newdf = (pd.concat([df1, df2, df3])).reset_index(drop=True)
     
-    newdf = newdf[newdf['Network'] == '100.0.0.0/8'].reset_index(drop=True)
+    newdf = newdf[newdf['Network'] == route["prefix"]].reset_index(drop=True)
     
     return newdf
 
-def write_config(router1, router2, router3):
+def write_config(route, rmap, router1, router2, router3):
     router1_config_lines = []
     router2_config_lines = []
     router3_config_lines = []
@@ -73,16 +74,24 @@ def write_config(router1, router2, router3):
     router3_config_lines[6] = 'hostname R3'
     
     ############################### ROUTER 1 CONFIGURATION ####################
+
+    ## Find two usable ip for the route prefix
+    net = ipaddress.ip_network(route["prefix"], strict=False)
+    hosts = list(net.hosts())
+    r1_ip = str(hosts[0]) if len(hosts) > 0 else str(net.network_address)
+    nbr_ip = str(hosts[1]) if len(hosts) > 1 else r1_ip
+    netmask = str(net.netmask)
+
     router1_config_lines.extend([
         'interface eth0/1',
         ' ip address 3.0.0.3 255.0.0.0',
         'interface eth0/2',
-        ' ip address 100.0.0.1 255.0.0.0',
+        f' ip address {r1_ip} {netmask}',
         '',
         'router bgp ' + str(router1['asNumber']),
         ' neighbor 3.0.0.2 remote-as ' + str(router2['asNumber']),
-        ' neighbor 100.0.0.2 remote-as 65000',
-        ' network 100.0.0.0',
+        f' neighbor {nbr_ip} remote-as 512',
+        f' network {route["prefix"]}',
         ' network 3.0.0.0'
     ])
     
@@ -90,15 +99,31 @@ def write_config(router1, router2, router3):
         router1_config_lines.append(' neighbor 3.0.0.2 route-reflector-client')
         
     ############################### ROUTER 2 CONFIGURATION ####################
+    pfxl_def = ""
+
+    if "prefix_list" in rmap and rmap["prefix_list"] != []:
+        prefix_list = rmap["prefix_list"]
+        for prefix in prefix_list:
+            pfxl_def += f"ip prefix-list PFXL {prefix['action']} {prefix['match']}\n"
+
+    prefix_match = f"  match ip address prefix-list PFXL" if (("prefix_list" in rmap) and (rmap["prefix_list"] != [])) else ""
+
+    
     router2_config_lines.extend([
         'interface eth0/1',
         ' ip address 3.0.0.2 255.0.0.0',
         'interface eth0/2',
         ' ip address 4.0.0.2 255.0.0.0',
         '',
+        pfxl_def,
+        'route-map RMap ' + rmap["rmap_action"] + ' 10',
+        prefix_match,
+        '',
         'router bgp ' + str(router2['asNumber']),
         ' neighbor 3.0.0.3 remote-as ' + str(router1['asNumber']),
         ' neighbor 4.0.0.3 remote-as ' + str(router3['asNumber']),
+        ' neighbor 4.0.0.3 next-hop-self',
+        ' neighbor 4.0.0.3 route-map RMap out',
         ' network 3.0.0.0',
         ' network 4.0.0.0'
     ])
@@ -144,7 +169,7 @@ with open("test.json", "r") as f:
 print("Loaded test case")
 
 # Parse the test case
-p_inRRflag, p_outRRflag, p_inAS, p_outAS = test["inRRflag"], test["outRRflag"], test["inAS"], test["outAS"]
+route, rmap, p_inRRflag, p_outRRflag, p_inAS, p_outAS = test["route"], test["rmap"], test["inRRflag"], test["outRRflag"], test["inAS"], test["outAS"]
 router2_asnum = 200; 
 router1_asnum = router2_asnum if p_inAS else 100
 router3_asnum = router2_asnum if p_outAS else 300
@@ -202,9 +227,15 @@ router3 = {
     'isClient': isClient_router3
 }
 
-write_config(router1, router2, router3)
+write_config(route, rmap, router1, router2, router3)
 new_df = run_batfish_example()
-print(new_df)
+print("Batfish run completed. The results are:")
+new_df_dict = new_df.to_dict(orient="records")
+print(new_df_dict)
+with open("output_df.json", "w", encoding="utf-8") as f:
+    json.dump(new_df_dict, f, indent=4, default=str)
+
+
 
 isReceivedR2 = False
 isReceivedR3 = False

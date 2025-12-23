@@ -3,7 +3,7 @@ sudo docker compose down
 #python3 gobgp_translator.py
 
 # setup the network and start the docker containers
-sudo docker compose -f docker-compose.yml up -d
+sudo docker compose up -d
 
 # command to run by forking a new process
 command_to_fork(){
@@ -18,8 +18,7 @@ command_to_fork &
 sleep 20
 
 # get the output
-sudo docker exec -it gobgp_2 gobgp global rib
-sudo docker exec -it gobgp_3 gobgp global rib
+sudo docker exec -it gobgp_1 gobgp global rib > router1_RIB.txt
 sudo docker exec -it gobgp_2 gobgp global rib > router2_RIB.txt
 sudo docker exec -it gobgp_3 gobgp global rib > router3_RIB.txt
 

@@ -5,7 +5,7 @@ import json
 import time
 
 ############# Paths #############
-test_dir = "../../../tests/bgp/NSDI/RR"
+test_dir = "../../../tests/bgp/NSDI/RR_RMAP"
 test_file_path = f"{test_dir}/debug_test.json"
 results_json_path = f"{test_dir}/results.json"
 diff_results_path = f"{test_dir}/diff_results.json"

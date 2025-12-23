@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 from __future__ import print_function
@@ -6,7 +7,7 @@ from sys import stdout
 from time import sleep
 
 messages = [
-   'announce route 100.0.0.0/8 next-hop self',
+    "announce route 100.10.1.0/24 next-hop self local-preference 200 med 20",
 ]
 
 sleep(5)

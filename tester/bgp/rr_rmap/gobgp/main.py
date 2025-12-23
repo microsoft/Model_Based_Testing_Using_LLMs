@@ -31,9 +31,10 @@ for t in test_cases:
     print_colored(f"\n\n@@@Running [Test Case {test_id} on GoBGP] from {args.test_file_path}...\n\n", "blue")
 
     ### Parse Test Case ###
-    p_inRRflag, p_outRRflag, p_inAS, p_outAS = t["inRRflag"], t["outRRflag"], t["inAS"], t["outAS"]
+    route, rmap, p_inRRflag, p_outRRflag, p_inAS, p_outAS = t["route"], t["rmap"], t["inRRflag"], t["outRRflag"], t["inAS"], t["outAS"]
 
-    router2_asnum = 200; 
+    exabgp_asnum = 512
+    router2_asnum = 200
     router1_asnum = router2_asnum if p_inAS else 100
     router3_asnum = router2_asnum if p_outAS else 300
 
@@ -68,6 +69,10 @@ for t in test_cases:
         isClient3 = False
         isRR_router3 = False
         isClient_router3 = False
+
+    exabgp = {
+        'asNumber': exabgp_asnum
+    }
         
     router1 = {
         'asNumber': router1_asnum,
@@ -89,7 +94,7 @@ for t in test_cases:
         'isClient': isClient_router3
     }
 
-    write_config(router1, router2, router3)
+    write_config(route, rmap, exabgp, router1, router2, router3)
     os.system('bash run.sh')
     
     isReceivedR2 = False

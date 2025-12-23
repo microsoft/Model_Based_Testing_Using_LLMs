@@ -52,9 +52,9 @@ def start_smtpd():
 
         # Start the SMTP server
         process = subprocess.Popen(
-            ["sudo", "smtpd", "-d"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            ["smtpd", "-d"],
+            stdout=None,
+            stderr=None,
         )
         print("OpenSMTPD server started in debugging mode.")
 
@@ -67,7 +67,7 @@ def start_smtpd():
 if __name__ == "__main__":
     CONFIG_PATH = "/etc/smtpd.conf"
     BIND_ADDRESS = "localhost"
-    PORT = 8025
+    PORT = 8030
 
     # Step 1: Edit the configuration file
     if edit_config_file(CONFIG_PATH, BIND_ADDRESS, PORT):

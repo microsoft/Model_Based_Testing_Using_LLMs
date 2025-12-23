@@ -111,6 +111,10 @@ router bgp {as1}
  neighbor 3.0.0.2 remote-as {as2}
  neighbor 2.0.0.2 remote-as {ase}
  {rr_config}
+ network 2.0.0.0
+ network 3.0.0.0
+ exit
+!
 """
 
     with open("frr1/frr.conf", "w") as f:
@@ -191,6 +195,9 @@ router bgp {as3}
  bgp router-id 4.0.0.3
  neighbor 4.0.0.2 remote-as {as2}
  {rr_config}
+ network 4.0.0.0
+ exit
+!
     """
 
     with open("frr3/frr.conf", "w") as f:
