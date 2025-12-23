@@ -172,8 +172,8 @@ def run_smtp_tests(server_address, tests_file):
         print(f"[*] Test {idx}/{len(test_cases)}")
 
         # Execute on all servers
-        print("    - Testing smtpd...")
-        smtpd_response = get_smtp_response(server_address, 8025, total_command_seq)
+        # print("    - Testing smtpd...")
+        # smtpd_response = get_smtp_response(server_address, 8025, total_command_seq)
         print("    - Testing opensmtpd...")
         opensmtpd_response = get_smtp_response(server_address, 8030, total_command_seq)
         print("    - Testing aiosmtpd...")
@@ -185,7 +185,7 @@ def run_smtp_tests(server_address, tests_file):
             "input_sequence": total_command_seq,
             "expected_response": expected_response,
             "actual_response": {
-                "smtpd": smtpd_response,
+                # "smtpd": smtpd_response,
                 "opensmtpd": opensmtpd_response,
                 "aiosmtpd": aiosmtpd_response
             }
@@ -207,14 +207,14 @@ def run_smtp_tests(server_address, tests_file):
 if __name__ == "__main__":
 
     ## Start the servers
-    aiosmtpd_process = subprocess.Popen(["python", "server_aiosmtpd.py"])
+    aiosmtpd_process = subprocess.Popen(["python3", "server_aiosmtpd.py"])
     time.sleep(5)  # wait for the server to start
 
     ## Start smtpd in a different terminal with py 3.8
     # smtpd_process = subprocess.Popen("python server_smtpd.py", shell=True)
     # time.sleep(5)  # wait for the server to start
     
-    opensmtpd_process = subprocess.Popen(["python", "server_opensmtpd.py"])
+    opensmtpd_process = subprocess.Popen(["python3", "server_opensmtpd.py"])
     time.sleep(5)  # wait for the server to start
 
     ## Run the tests
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     ## Terminate the servers
     aiosmtpd_process.terminate()
     opensmtpd_process.terminate()
-    os.system("kill -9 $(lsof -t -i:8025)")  
+    # os.system("kill -9 $(lsof -t -i:8025)")  
     os.system("kill -9 $(lsof -t -i:8030)")
     os.system("kill -9 $(lsof -t -i:8034)")
 

@@ -7,6 +7,7 @@ Please ensure that [Docker](https://www.docker.com/) is already installed on you
 ```bash
 $ docker pull klee/klee:3.0
 ```
+
 Next, clone the repository onto your local machine.
 ```bash
 $ git clone https://github.com/microsoft/Model_Based_Testing_Using_LLMs.git
@@ -148,12 +149,13 @@ For running differential testing with SMTP test inputs, first navigate to the **
 $ cd smtp
 ```
 
-Within the same directory, open a new terminal and start an SMTP server instance by running the following command:
+Download the required Python libraries.
 ```bash
-$ python server_smtpd.py
+$ sudo apt-get install opensmtpd
+$ sudo pip3 install aiosmtpd
 ```
 
-Finally, in your previous terminal, run the follwowing command:
+Run the following command:
 ```bash
 $ python3 diff_testing.py
 ```
