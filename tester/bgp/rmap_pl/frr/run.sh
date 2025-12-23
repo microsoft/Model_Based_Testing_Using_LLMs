@@ -14,7 +14,7 @@ command_to_fork &
 # let the parent process sleep so that exabgp can send the route
 sleep 20
 
-sudo docker exec -it frr_2 vtysh -c "clear ip bgp * soft"
+docker exec -it frr_2 vtysh -c "clear ip bgp * soft"
 
 sleep 5
 

@@ -42,13 +42,13 @@ results_file = "results.json"
 
 ## Remove any existing Batfish container
 print("Killing Existing Batfish Container...")
-subprocess.run("sudo kill -9 $(ps aux | grep batfish | grep -v grep | awk '{print $2}')", shell=True)
-subprocess.run("sudo docker rm batfish", shell=True)
+subprocess.run("kill -9 $(ps aux | grep batfish | grep -v grep | awk '{print $2}')", shell=True)
+subprocess.run("docker rm batfish", shell=True)
 print("Batfish Container stopped and removed.")
 
 ## Start the Container, 
 subprocess.run(
-    f"sudo docker run -d --name batfish -v batfish-data:/data -v {current_dir}/testing:/notebooks/testing/ -p 8888:8888 -p 9997:9997 -p 9996:9996 batfish/allinone",
+    f"docker run -d --name batfish -v batfish-data:/data -v {current_dir}/testing:/notebooks/testing/ -p 8888:8888 -p 9997:9997 -p 9996:9996 batfish/allinone",
     shell=True)
 
 print("New Batfish Container Started...")
@@ -80,7 +80,7 @@ for test_case in test_cases:
 
     # Run the Batfish Test
     print("Running Batfish test...")
-    # os.system('sudo docker exec -t batfish bash -c "cd notebooks/testing && python3 test.py"')
+    # os.system('docker exec -t batfish bash -c "cd notebooks/testing && python3 test.py"')
 
     try:
         subprocess.run(
@@ -109,8 +109,8 @@ for test_case in test_cases:
 
 # Stop the Batfish Container
 print("Stopping Batfish Container...")
-subprocess.run("sudo kill -9 $(ps aux | grep batfish | grep -v grep  | awk '{print $2}')", shell=True)
-subprocess.run("sudo docker rm batfish", shell=True)
+subprocess.run("kill -9 $(ps aux | grep batfish | grep -v grep  | awk '{print $2}')", shell=True)
+subprocess.run("docker rm batfish", shell=True)
 print("Batfish Container stopped and removed.")
 
 
