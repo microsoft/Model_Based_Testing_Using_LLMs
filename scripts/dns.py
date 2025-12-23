@@ -976,12 +976,12 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--module", type=str, required=True,
                         choices=["cname", "dname", "wildcard", "ipv4", "full_lookup", "loop_count", "rcode", "authoritative"],
                         help="The DNS module to generate inputs for.", default="cname")
-    parser.add_argument("-n", "--nsdi", action="store_true",
-                        help="Generate NSDI inputs.", default=False)
+    parser.add_argument("-t", "--test", action="store_true",
+                        help="Generate inputs for differential testing.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
     args = parser.parse_args()
-    NSDI = args.nsdi
+    NSDI = args.test
     if args.module == "cname":
         cname_match_check(args.runs)
     elif args.module == "dname":

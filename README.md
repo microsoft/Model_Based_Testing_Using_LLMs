@@ -47,7 +47,7 @@ options:
   -h, --help            show this help message and exit
   -m {cname,dname,wildcard,ipv4,full_lookup,loop_count,rcode,authoritative}, --module {cname,dname,wildcard,ipv4,full_lookup,loop_count,rcode,authoritative}
                         The DNS module to generate inputs for.
-  -n, --nsdi            Generate NSDI inputs.
+  -t, --test            Generate inputs for differential testing.
   -r RUNS, --runs RUNS  Number of runs to generate inputs for.
 ```
 
@@ -96,8 +96,8 @@ $ cd dns
 Build the required DNS implementation images by following this [README](https://github.com/microsoft/Model_Based_Testing_Using_LLMs/blob/main/tester/dns/Implementations/README.md). For differential testing, we have the following options:
 ```bash
 $ python3 -m Scripts.test_with_valid_zone_files -h
-usage: python3 -m Scripts.test_with_valid_zone_files [-h] [-path DIRECTORY_PATH]
-                                                     [-id {1,2,3,4,5}] [-r START END] [-b]
+usage: python3 -m Scripts.test_with_valid_zone_files [-h] [--path DIRECTORY_PATH]
+                                                     [--id {1,2,3,4,5}] [-r START END] [-b]
                                                      [-n] [-k] [-p] [-c] [-y] [-m] [-t] [-e] [-l]
 
 Runs tests with valid zone files on different implementations.
@@ -106,10 +106,10 @@ expected response to flag differences (only when one implementation is passed fo
 
 optional arguments:
   -h, --help            show this help message and exit
-  -path DIRECTORY_PATH  The path to the directory containing ZoneFiles and either Queries or
+  --path DIRECTORY_PATH  The path to the directory containing ZoneFiles and either Queries or
                         ExpectedResponses directories.
                         (default: Results/ValidZoneFileTests/)
-  -id {1,2,3,4,5}       Unique id for all the containers (useful when running comparison in
+  --id {1,2,3,4,5}       Unique id for all the containers (useful when running comparison in
                         parallel). (default: 1)
   -r START END          The range of tests to compare. (default: All tests)
   -b                    Disable Bind. (default: False)
