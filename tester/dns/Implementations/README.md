@@ -9,6 +9,7 @@
     **Please note:**
     - Use the `image_name` same as the `directory_name` but in lowercase.
     - _Each Docker image consumes  ~&hairsp;1-2&hairsp;GB of disk space._
+    - _For building the oct images of Bind, Knot, Nsd and Powerdns, replace Dockerfile with Dockerfile_oct._
     - Technitium implementation does not have the corresponding Oct, 2020 version, and only the latest commit is used for any build.
 
     By default, the image built uses the code around October 1<sup>st</sup>, 2020. The links to the exact `commit` used are as follows:
