@@ -149,21 +149,22 @@ For running differential testing with SMTP test inputs, first navigate to the **
 $ cd smtp
 ```
 
+To run the **smtpd** server, we need Python3.8. The other two implementations **aiosmtpd** and **opensmtpd** do not have these restrictions.
+
+Open a new terminal and navigate to the current working directory.
 Download the required libraries.
 ```bash
 $ sudo apt-get install opensmtpd
 $ sudo pip3 install aiosmtpd
 ```
-To run the **smtpd** server, we need Python3.8. For this, open a new terminal and navigate to the current working directory.
 Next, run the following commands:
 ```bash
 $ conda create --name smtp_env python=3.8
 $ conda activate smtp_env
 $ python3 server_smtpd.py
 ```
-This will start the **smtpd** server. The other two implementations **aiosmtpd** and **opensmtpd** do not have these restrictions.
-
-On the original terminal, run the following command. This starts the other two SMTP servers and performs differential testing on all three:
+This will start the **smtpd** server. 
+Keeping the process running on this terminal, go back to the previous terminal and run the following command. This starts the other two SMTP servers and performs differential testing on all three:
 ```bash
 $ sudo python3 diff_testing.py
 ```
