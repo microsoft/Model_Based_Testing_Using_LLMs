@@ -182,7 +182,7 @@ def write_config(originAS, router2, router3, remove_private_as_flag, replace_as_
         router2_config['neighbors'][1]['config']['peer-as'] = router3['asNumber']
         router3_config['neighbors'][0]['config']['peer-as'] = router2['asNumber']
     else:
-        if router2['subAS'] != 0:
+        if router2['subAS'] != 0 and router3['subAS'] != 0:
             if router2['subAS'] != router3['subAS']:
                 router2_config['global']['confederation']['config']['member-as-list'].append(router3['subAS'])
                 router3_config['global']['confederation']['config']['member-as-list'].append(router2['subAS'])
