@@ -22,7 +22,7 @@ $ source eywa_env/bin/activate
 Alternatively, you could use a **conda** virtual environment.
 
 ```bash
-$ conda create --name eywa_env python=3.10
+$ conda create --name eywa_env python=3.12
 $ conda activate eywa_env
 ```
 
@@ -41,7 +41,7 @@ $ echo "sk..." > openai_key.txt
 To generate test inputs for differential testing, you must be in the **scripts** directory. For **DNS**, the following options are available:
 ```bash
 $ python3 dns.py -h
-usage: dns.py [-h] -m {cname,dname,wildcard,ipv4,full_lookup,loop_count,rcode,authoritative} [-n] [-r RUNS]
+usage: dns.py [-h] -m {cname,dname,wildcard,ipv4,full_lookup,loop_count,rcode,authoritative} [-t] [-r RUNS]
 
 options:
   -h, --help            show this help message and exit
@@ -53,14 +53,14 @@ options:
 
 For example, if you want to generate test inputs for CNAME with `10` LLM-written models, you must run the following command:
 ```bash
-$ python3 dns.py -n -m cname -r 10
+$ python3 dns.py -t -m cname -r 10
 ```
 Note that for the specific purpose of differential testing, the `-n` flag must be enabled at all times.
 
 For **BGP** test generation, we have the following options:
 ```bash
 $ python3 bgp.py -h
-usage: bgp.py [-h] -m {confed,rr,rmap_pl,rr_rmap} [-n] [-r RUNS]
+usage: bgp.py [-h] -m {confed,rr,rmap_pl,rr_rmap} [-r RUNS]
 
 options:
   -h, --help            show this help message and exit

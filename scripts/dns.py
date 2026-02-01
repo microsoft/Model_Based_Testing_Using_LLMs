@@ -115,7 +115,7 @@ def cname_match_check(runs=12):
     else:
         output_dir = pathlib.Path("CNAME")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -170,7 +170,7 @@ def dname_match_check(runs=12):
     else:
         output_dir = pathlib.Path("DNAME")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -225,7 +225,7 @@ def ipv4_match_check(runs=12):
     else:
         output_dir = pathlib.Path("IPv4")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -358,7 +358,7 @@ def wildcard_match_check(runs=12):
     else:
         output_dir = pathlib.Path("Wildcard")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -567,7 +567,7 @@ def full_query_lookup(runs=12):
     else:
         output_dir = pathlib.Path("FullLookup")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -665,7 +665,7 @@ def return_code_lookup(runs=12):
     else:
         output_dir = pathlib.Path("RCODE")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -763,7 +763,7 @@ def authoritative_lookup(runs=12):
     else:
         output_dir = pathlib.Path("Authoritative")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
@@ -864,7 +864,7 @@ def loop_count(runs=12):
     else:
         output_dir = pathlib.Path("LoopCount")
         for i in range(0, 1):
-            for temperature in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+            for temperature in [0.2, 0.4, 0.6, 0.8, 1.0]:
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
