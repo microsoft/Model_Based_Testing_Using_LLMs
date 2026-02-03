@@ -89,7 +89,13 @@ To run differential testing with the generated test inputs in the previous step,
 ```bash
 $ cd dns
 ```
-Build the required DNS implementation images by following this [README](https://github.com/microsoft/Model_Based_Testing_Using_LLMs/blob/main/tester/dns/Implementations/README.md). For differential testing, we have the following options:
+
+Build the required DNS implementation images by running the following command:
+```bash
+$ python3 generate_docker_images.py -l
+```
+
+For differential testing, we have the following options:
 ```bash
 $ python3 -m Scripts.test_with_valid_zone_files -h
 usage: python3 -m Scripts.test_with_valid_zone_files [-h] [--path DIRECTORY_PATH]
