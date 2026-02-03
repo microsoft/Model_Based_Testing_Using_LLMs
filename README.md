@@ -14,12 +14,7 @@ $ git clone https://github.com/microsoft/Model_Based_Testing_Using_LLMs.git
 $ cd Model_Based_Testing_Using_LLMs
 ```
 
-We recommend setting up a virtual environment in Python to avoid conficts with pre-installed libraries.
-```bash
-$ python3 -m venv eywa_env
-$ source eywa_env/bin/activate
-```
-Alternatively, you could use a **conda** virtual environment.
+We recommend setting up a conda virtual environment to avoid conficts with existing libraries. Create and activate a new conda environment with Python 3.12.
 
 ```bash
 $ conda create --name eywa_env python=3.12
@@ -30,11 +25,12 @@ Install the required libraries. The following command ensures that **eywa** is i
 ```bash
 $ pip3 install -e .
 ```
-Now, you need to add your OpenAI API key to the **scripts** folder.
+Now, you need to add your OpenAI API key to the **scripts** folder. Follow the link "Create an API key" provided [here](https://platform.openai.com/docs/quickstart) to get one.
+
 ```bash
 $ cd scripts
 $ touch openai_key.txt
-$ echo "sk..." > openai_key.txt
+$ echo "<your_openai_api_key>" > openai_key.txt
 ```
 ## Test Generation
 
@@ -55,7 +51,7 @@ For example, if you want to generate test inputs for CNAME with `10` LLM-written
 ```bash
 $ python3 dns.py -t -m cname -r 10
 ```
-Note that for the specific purpose of differential testing, the `-n` flag must be enabled at all times.
+Note that for the specific purpose of differential testing, the `-t` flag must be enabled at all times.
 
 For **BGP** test generation, we have the following options:
 ```bash
@@ -74,9 +70,9 @@ So for instance, if you want to generate test inputs for testing BGP confederati
 $ python3 bgp.py -m confed -r 10
 ```
 
-For SMTP, we have only one option (you can still select the number of runs):
+For SMTP, we have only one option for the model i.e. "server" (you can still select the number of runs):
 ```bash
-$ python3 smtp -m server -r 10
+$ python3 smtp.py -m server -r 10
 ```
 
 All the generated test cases are stored in `.../tests/{dns|bgp|smtp}/NSDI/{model}` folder as appropriate.

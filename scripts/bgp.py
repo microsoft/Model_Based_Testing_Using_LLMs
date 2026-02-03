@@ -123,29 +123,32 @@ A few points to keep in mind:
     test_dir.mkdir(exist_ok=True)
     test_cases = []
     for input in inputs:
-        originAS = input[0]
-        router2 = input[1]
-        router3 = input[2]
-        removePrivateAS = input[3]
-        replaceAS = input[4]
-        localPref = input[5]
-        isExternalPeer = input[6]
-        test_case = {
-            "originAS": originAS,
-            "router2": {
-                "asNumber": router2["asNumber"],
-                "subAS": router2["subAS"]
-            },
-            "router3": {
-                "asNumber": router3["asNumber"],
-                "subAS": router3["subAS"]
-            },
-            "removePrivateAS": removePrivateAS,
-            "replaceAS": replaceAS,
-            "localPref": localPref,
-            "isExternalPeer": isExternalPeer
-        }
-        test_cases.append(test_case)
+        try:
+            originAS = input[0]
+            router2 = input[1]
+            router3 = input[2]
+            removePrivateAS = input[3]
+            replaceAS = input[4]
+            localPref = input[5]
+            isExternalPeer = input[6]
+            test_case = {
+                "originAS": originAS,
+                "router2": {
+                    "asNumber": router2["asNumber"],
+                    "subAS": router2["subAS"]
+                },
+                "router3": {
+                    "asNumber": router3["asNumber"],
+                    "subAS": router3["subAS"]
+                },
+                "removePrivateAS": removePrivateAS,
+                "replaceAS": replaceAS,
+                "localPref": localPref,
+                "isExternalPeer": isExternalPeer
+            }
+            test_cases.append(test_case)
+        except Exception as e:
+            continue
 
     with open(test_dir / "tests.json", "w") as f:
         json.dump(test_cases, f, indent=4)
@@ -228,17 +231,20 @@ You have to take into consideration all BGP route reflector rules, eBGP, iBGP ru
     test_dir.mkdir(exist_ok=True)
     test_cases = []
     for input in inputs:
-        inRRflag = input[0]
-        outRRflag = input[1]
-        inAS = input[2]
-        outAS = input[3]
-        test_case = {
-            "inRRflag": inRRflag,
-            "outRRflag": outRRflag,
-            "inAS": inAS,
-            "outAS": outAS
-        }
-        test_cases.append(test_case)
+        try:
+            inRRflag = input[0]
+            outRRflag = input[1]
+            inAS = input[2]
+            outAS = input[3]
+            test_case = {
+                "inRRflag": inRRflag,
+                "outRRflag": outRRflag,
+                "inAS": inAS,
+                "outAS": outAS
+            }
+            test_cases.append(test_case)
+        except Exception as e:
+            continue
 
     with open(test_dir / 'tests.json', 'w') as f:
         json.dump(test_cases, f, indent=4)
@@ -379,33 +385,36 @@ If a match is found, the function should update the Result struct's isPermitted 
     test_dir.mkdir(exist_ok=True)
     test_cases = []
     for input in inputs:
-        route = input[0]
-        routeMap = input[1]
-        # matchPrefixList is a single entry now (not an array)
-        mpl = routeMap["stanza"][0]["matchPrefixList"]
-        if mpl["any"]:
-            pl_match_str = "any"
-        else:
-            pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
-        test_case = {
-            "route": {
-                "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
-                "local_pref": route["localPref"],
-                "med": route["med"]
-            },
-            "rmap": {
-                "local_pref": routeMap["stanza"][0]["matchLocalPref"],
-                "med": routeMap["stanza"][0]["matchMed"],
-                "prefix_list": [
-                    {
-                        "match": pl_match_str,
-                        "action": "permit" if mpl["permit"] else "deny"
-                    }
-                ],
-                "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
+        try: 
+            route = input[0]
+            routeMap = input[1]
+            # matchPrefixList is a single entry now (not an array)
+            mpl = routeMap["stanza"][0]["matchPrefixList"]
+            if mpl["any"]:
+                pl_match_str = "any"
+            else:
+                pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
+            test_case = {
+                "route": {
+                    "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
+                    "local_pref": route["localPref"],
+                    "med": route["med"]
+                },
+                "rmap": {
+                    "local_pref": routeMap["stanza"][0]["matchLocalPref"],
+                    "med": routeMap["stanza"][0]["matchMed"],
+                    "prefix_list": [
+                        {
+                            "match": pl_match_str,
+                            "action": "permit" if mpl["permit"] else "deny"
+                        }
+                    ],
+                    "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
+                }
             }
-        }
-        test_cases.append(test_case)
+            test_cases.append(test_case)
+        except Exception as e:
+            continue
     with open(test_dir / 'tests.json', 'w') as f:
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP route map with single-entry prefix list.")
@@ -624,44 +633,47 @@ If R2 receives the route, then before advertising it to other interfaces, it app
     test_dir.mkdir(exist_ok=True)
     test_cases = []
     for input in inputs:
-        route = input[0]
-        routeMap = input[1]
-        inRRflag = input[2]
-        outRRflag = input[3]
-        inAS = input[4]
-        outAS = input[5]
-        mpl = routeMap["stanza"][0]["matchPrefixList"]
-        if mpl["any"]:
-            pl_match_str = "any"
-        else:
-            pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
+        try: 
+            route = input[0]
+            routeMap = input[1]
+            inRRflag = input[2]
+            outRRflag = input[3]
+            inAS = input[4]
+            outAS = input[5]
+            mpl = routeMap["stanza"][0]["matchPrefixList"]
+            if mpl["any"]:
+                pl_match_str = "any"
+            else:
+                pl_match_str = int_to_prefix(mpl["prefix"], mpl["prefixLength"]) + f" le {mpl['le']} ge {mpl['ge']}"
 
-        # matchPrefixList is now a single entry (not an array)
-        mpl = routeMap["stanza"][0]["matchPrefixList"]
+            # matchPrefixList is now a single entry (not an array)
+            mpl = routeMap["stanza"][0]["matchPrefixList"]
 
-        test_case = {
-            "route": {
-                "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
-                "local_pref": route["localPref"],
-                "med": route["med"]
-            },
-            "rmap": {
-                "local_pref": routeMap["stanza"][0]["matchLocalPref"],
-                "med": routeMap["stanza"][0]["matchMed"],
-                "prefix_list": [
-                    {
-                        "match": pl_match_str,
-                        "action": "permit" if mpl["permit"] else "deny"
-                    }
-                ],
-                "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
-            },
-            "inRRflag": inRRflag,
-            "outRRflag": outRRflag,
-            "inAS": inAS,
-            "outAS": outAS
-        }
-        test_cases.append(test_case)
+            test_case = {
+                "route": {
+                    "prefix": int_to_prefix(route["prefix"], route["prefixLength"]),
+                    "local_pref": route["localPref"],
+                    "med": route["med"]
+                },
+                "rmap": {
+                    "local_pref": routeMap["stanza"][0]["matchLocalPref"],
+                    "med": routeMap["stanza"][0]["matchMed"],
+                    "prefix_list": [
+                        {
+                            "match": pl_match_str,
+                            "action": "permit" if mpl["permit"] else "deny"
+                        }
+                    ],
+                    "rmap_action": "permit" if routeMap["stanza"][0]["rmapAction"] else "deny"
+                },
+                "inRRflag": inRRflag,
+                "outRRflag": outRRflag,
+                "inAS": inAS,
+                "outAS": outAS
+            }
+            test_cases.append(test_case)
+        except Exception as e:
+            continue
         
     with open(test_dir / 'tests.json', 'w') as f:
         json.dump(test_cases, f, indent=4)
