@@ -38,7 +38,7 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
                        stdout=subprocess.PIPE, check=False)
     # Start the server
     subprocess.Popen(['docker', 'exec', cname, 'dotnet',
-                     'DnsServer/DnsServerApp/bin/Release/publish/DnsServerApp.dll'], stdout=DEVNULL, stderr=DEVNULL)
+                     '/opt/technitium/dns/DnsServerApp.dll'], stdout=DEVNULL, stderr=DEVNULL)
     time.sleep(2)
 
     login_url = f'http://localhost:{str(port + 1)}/api/user/login'

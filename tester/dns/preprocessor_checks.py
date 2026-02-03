@@ -73,12 +73,13 @@ def delete_container(container_name: str) -> None:
         ['docker', 'ps', '-a', '--format', '{{.Names}}'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
     )
-    output = cmd_status.stdout.decode("utf-8")
+    output = cmd_status.stdout.decode("utf-8").strip()
     if cmd_status.returncode != 0:
         sys.exit(f'Error executing docker ps: {cmd_status.stderr.decode("utf-8")}')
 
     # print(f'### Current containers: {output}')
-    all_container_names = [name[1:-1] for name in output.strip().split("\n")]
+    all_container_names = output.splitlines()
+    # print(f'### All container names: {all_container_names}')
     if container_name not in all_container_names:
         return  # nothing to delete
 
@@ -90,7 +91,7 @@ def delete_container(container_name: str) -> None:
         return
     except subprocess.CalledProcessError:
         # If that fails, fall back to killing the process
-        print(f'### Error: Could not remove container {container_name}, killing it...')
+        # print(f'### Error: Could not remove container {container_name}, killing it...')
         try:
             # Find the container's underlying process via `docker inspect`
             # print(f'### Inspecting container {container_name} to find its PID...')
@@ -101,7 +102,7 @@ def delete_container(container_name: str) -> None:
             pid = inspect.stdout.decode("utf-8").strip()
             if pid.isdigit():
                 subprocess.run(['kill', '-9', pid], check=False)
-                # print(f'### Killed process {pid} for container {container_name}.')
+                print(f'### Successfully removed container {container_name}.')
         except subprocess.CalledProcessError:
             # fallback: generic ps|grep kill if needed
             print(f'### Inspect failed, falling back to generic ps|grep kill for {container_name}...')

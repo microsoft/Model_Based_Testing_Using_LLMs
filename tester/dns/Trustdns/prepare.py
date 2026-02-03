@@ -30,13 +30,13 @@ def run(zone_file: pathlib.Path, zone_domain: str, cname: str, port: int, restar
         subprocess.run(
             ['docker', 'exec', cname, 'pkill', 'named'], stdout=subprocess.PIPE, check=False)
         subprocess.run(
-            ['docker', 'exec', cname, 'pkill', 'trust-dns'], stdout=subprocess.PIPE, check=False)
+            ['docker', 'exec', cname, 'pkill', 'hickory-dns'], stdout=subprocess.PIPE, check=False)
     if tag == ":latest":
-        folder = "test_configs"
-        binary = "trust-dns"
+        folder = "named_test_configs"
+        binary = "hickory-dns"
     else:
         folder = "named_test_configs"
-        binary = "named"
+        binary = "hickory-dns"
     # Copy the new zone file into the container
     subprocess.run(['docker', 'cp', str(zone_file), cname +
                     f':trust-dns/tests/test-data/{folder}/'],

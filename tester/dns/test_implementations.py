@@ -46,6 +46,7 @@ from argparse import (SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser,
                       ArgumentTypeError, Namespace)
 from datetime import datetime
 from multiprocessing import Process
+from preprocessor_checks import delete_container
 from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
 
 import dns.message
@@ -110,6 +111,7 @@ def remove_container(cid: int) -> None:
 
     :param cid: The unique id for all the containers
     """
+    print(f'### Removing containers with cid {cid}...')
     # Get the list of containers
     cmd_status = subprocess.run(
         ['docker', 'ps', '-a', '--format', '"{{.Names}}"'], stdout=subprocess.PIPE, check=False)
@@ -123,8 +125,11 @@ def remove_container(cid: int) -> None:
         # Force remove the container if it is running
         for tag in ["latest", "oct"]:
             if str(cid) + server + "_" + tag in all_container_names:
-                subprocess.run(['docker', 'container', 'rm', str(cid) + server + "_" + tag, '-f'],
-                               stdout=subprocess.PIPE, check=False)
+                try:
+                    subprocess.run(['docker', 'container', 'rm', str(cid) + server + "_" + tag, '-f'],
+                                stdout=subprocess.PIPE, check=True)
+                except: 
+                    delete_container(str(cid) + server + "_" + tag)
 
 
 def start_containers(cid: int, implementations: Dict[str, Tuple[bool, int]]) -> None:
@@ -159,6 +164,7 @@ def querier(query_name: str, query_type: str, port: int) -> Union[str, dns.messa
     """
     domain = dns.name.from_text(query_name)
     addr = '127.0.0.1'
+    print(f'### Querying {domain} of type {query_type} at port {port}...')
     try:
         query = dns.message.make_query(domain, query_type)
         # Removes the default Recursion Desired Flag
@@ -402,6 +408,7 @@ def run_test(zoneid: str,
             impl, tag = impl.split('_')
             if check:
                 respo = querier(qname, qtype, port * int(cid))
+                print(f'\n### Got response from {impl + "_" + tag}: {respo}')
                 #  If it is not a proper DNS response, try again with a new container
                 if not isinstance(respo, dns.message.Message):
                     single_impl = {}
