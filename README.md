@@ -151,7 +151,8 @@ Open a new terminal and navigate to the current working directory.
 Download the required libraries.
 ```bash
 $ sudo apt-get install opensmtpd
-$ sudo pip3 install aiosmtpd
+$ sudo apt-get install python3-aiosmtpd
+$ sudo apt-get install python3-tqdm
 ```
 Next, run the following commands:
 ```bash
@@ -165,7 +166,7 @@ Keeping the process running on this terminal, go back to the previous terminal a
 $ sudo python3 diff_testing.py
 ```
 
-Results will be saved in test directory i.e. `../../tests/smtp/NSDI/SMTP`
+Results will be saved in the file: `../../tests/smtp/NSDI/SMTP/diff_results.json`
 
 ## Visualization
 

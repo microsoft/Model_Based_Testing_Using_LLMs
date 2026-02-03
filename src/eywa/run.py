@@ -100,8 +100,6 @@ def run(graph: DependencyGraph, k: int = 1, ratelimit_sec=10, debug: Union[None,
                     f.write(str(e) + "\n")
                     traceback.print_exc(file=f)
     unique_tuples_list = [recreate_structure(t) for t in unique_testcases]
-    print(
-        f"Generated {len(unique_tuples_list)} test cases across {k} runs with temp {temperature_value}.", flush=True)
     with open(os.path.join(debug, f"stats_{temperature_value}.json"), "w") as f:
         json.dump(stats, f, indent=2)
     return unique_tuples_list
