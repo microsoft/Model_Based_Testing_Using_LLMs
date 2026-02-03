@@ -92,15 +92,46 @@ $ cd dns
 
 Build the required DNS implementation images by running the following command:
 ```bash
-$ python3 generate_docker_images.py -l
+$ python3 generate_docker_images.py -l 
+
+To disable some implementations do this:
+# parser.add_argument('-b', help='Disable Bind.', action="store_true")
+#     parser.add_argument('-n', help='Disable Nsd.', action="store_true")
+#     parser.add_argument('-k', help='Disable Knot.', action="store_true")
+#     parser.add_argument('-p', help='Disable PowerDns.', action="store_true")
+#     parser.add_argument('-c', help='Disable CoreDns.', action="store_true")
+#     parser.add_argument('-y', help='Disable Yadifa.', action="store_true")
+#     parser.add_argument('-m', help='Disable MaraDns.', action="store_true")
+#     parser.add_argument('-t', help='Disable TrustDns.', action="store_true")
+#     parser.add_argument('-g', help='Disable Gdnsd.', action="store_true")
+#     parser.add_argument('-w', help='Disable TwistedNames.', action="store_true")
+#     parser.add_argument('-e', help='Disable Technitium.', action="store_true")
+
+-b : Disable Bind.
+-n : Disable Nsd.
+-k : Disable Knot.
+-p : Disable PowerDns.
+-c : Disable CoreDns.
+-y : Disable Yadifa.
+-t : Disable TrustDns.
+-g : Disable Gdnsd.
+-w : Disable TwistedNames.
+-e : Disable Technitium.
 ```
 
 For differential testing, we have the following options:
 ```bash
-$ python3 -m Scripts.test_with_valid_zone_files -h
-usage: python3 -m Scripts.test_with_valid_zone_files [-h] [--path DIRECTORY_PATH]
+$ python3 test_implementations.py --path ../../tests/dns/NSDI/{model} -i -s -o -d -j -a -u
+```
+
+Runs all the latest DNS implementations against the test inputs stored in the specified path and disables all the older versions.
+
+model: [CNAME|DNAME|Wildcard|IPv4|FullLookup|LoopCount|RCODE|Authoritative]
+
+```bash
+usage: python3 test_implementations.py [-h] [--path DIRECTORY_PATH]
                                                      [--id {1,2,3,4,5}] [-r START END] [-b]
-                                                     [-n] [-k] [-p] [-c] [-y] [-m] [-t] [-e] [-l]
+                                                     [-n] [-k] [-p] [-c] [-y] [-m] [-t] [-e] 
 
 Runs tests with valid zone files on different implementations.
 Either compares responses from mulitple implementations with each other or uses a

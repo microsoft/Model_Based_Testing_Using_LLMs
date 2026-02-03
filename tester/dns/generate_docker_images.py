@@ -2,7 +2,7 @@
 Builds docker images for the implementations.
 Creates and prints logs to the image_generation_log.txt file.
 
-usage: generate_docker_images.py [-h] [-l] [-b] [-n] [-k] [-p] [-c] [-y] [-m] [-t] [-g] [-w]
+usage: generate_docker_images.py [-h] [-l] [-b] [-n] [-k] [-p] [-c] [-y] [-t] [-g] [-w] [-e]
 
 optional arguments:
   -h, --help    show this help message and exit
@@ -13,10 +13,10 @@ optional arguments:
   -p            Disable PowerDns. (default: False)
   -c            Disable CoreDns. (default: False)
   -y            Disable Yadifa. (default: False)
-  -m            Disable MaraDns. (default: False)
   -t            Disable TrustDns. (default: False)
   -g            Disable Gdnsd. (default: False)
   -w            Disable TwistedNames. (default: False)
+  -e            Disable Technitium. (default: False)
 """
 #!/usr/bin/env python3
 
@@ -78,7 +78,6 @@ if __name__ == '__main__':
     parser.add_argument('-p', help='Disable PowerDns.', action="store_true")
     parser.add_argument('-c', help='Disable CoreDns.', action="store_true")
     parser.add_argument('-y', help='Disable Yadifa.', action="store_true")
-    parser.add_argument('-m', help='Disable MaraDns.', action="store_true")
     parser.add_argument('-t', help='Disable TrustDns.', action="store_true")
     parser.add_argument('-g', help='Disable Gdnsd.', action="store_true")
     parser.add_argument('-w', help='Disable TwistedNames.', action="store_true")
@@ -97,8 +96,6 @@ if __name__ == '__main__':
         cmds.append("coredns")
     if not args.y:
         cmds.append("yadifa")
-    if not args.m:
-        cmds.append("maradns")
     if not args.t:
         cmds.append("trustdns")
     if not args.g and args.latest:

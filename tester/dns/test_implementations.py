@@ -99,7 +99,7 @@ def get_ports(input_args: Namespace) -> Dict[str, Tuple[bool, int]]:
     implementations['trustdns_oct'] = (not input_args.u, 8701)
     implementations['gdnsd_latest'] = (not input_args.g, 8800)
     implementations['twistednames_latest'] = (not input_args.w, 8900)
-    implementations['technitium_oct'] = (not input_args.e, 9000)
+    implementations['technitium_latest'] = (not input_args.e, 9000)
     # implementations['technitium_oct'] = (not input_args.e, 9010)
     return implementations
 

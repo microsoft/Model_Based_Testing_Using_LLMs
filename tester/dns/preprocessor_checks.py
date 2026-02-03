@@ -53,7 +53,7 @@ def get_ports(input_args: Namespace) -> Dict[str, Tuple[bool, int]]:
     return implementations
 
 
-def delete_container(container_name: str) -> None:
+def delete_container_original(container_name: str) -> None:
     """Deletes a container if it is running"""
     cmd_status = subprocess.run(
         ['docker', 'ps', '-a', '--format', '"{{.Names}}"'], stdout=subprocess.PIPE, check=False)
@@ -64,6 +64,55 @@ def delete_container(container_name: str) -> None:
     if container_name in all_container_names:
         subprocess.run(['docker', 'container', 'rm',
                        '-f', container_name], check=True)
+        
+def delete_container(container_name: str) -> None:
+    """Forcefully deletes a Docker container, killing its process if needed"""
+    # List all container names
+    print(f'### Entered delete_container() for {container_name}')
+    cmd_status = subprocess.run(
+        ['docker', 'ps', '-a', '--format', '{{.Names}}'],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False
+    )
+    output = cmd_status.stdout.decode("utf-8")
+    if cmd_status.returncode != 0:
+        sys.exit(f'Error executing docker ps: {cmd_status.stderr.decode("utf-8")}')
+
+    # print(f'### Current containers: {output}')
+    all_container_names = [name[1:-1] for name in output.strip().split("\n")]
+    if container_name not in all_container_names:
+        return  # nothing to delete
+
+    # print(f'### Found container {container_name}, attempting to delete it...')
+    # Try normal docker rm -f first
+    try:
+        print(f'### Trying to remove container {container_name} normally...')
+        subprocess.run(['docker', 'rm', '-f', container_name], check=True)
+        return
+    except subprocess.CalledProcessError:
+        # If that fails, fall back to killing the process
+        print(f'### Error: Could not remove container {container_name}, killing it...')
+        try:
+            # Find the container's underlying process via `docker inspect`
+            # print(f'### Inspecting container {container_name} to find its PID...')
+            inspect = subprocess.run(
+                ['docker', 'inspect', '--format', '{{.State.Pid}}', container_name],
+                stdout=subprocess.PIPE, check=True
+            )
+            pid = inspect.stdout.decode("utf-8").strip()
+            if pid.isdigit():
+                subprocess.run(['kill', '-9', pid], check=False)
+                # print(f'### Killed process {pid} for container {container_name}.')
+        except subprocess.CalledProcessError:
+            # fallback: generic ps|grep kill if needed
+            print(f'### Inspect failed, falling back to generic ps|grep kill for {container_name}...')
+            subprocess.run(
+                f"kill -9 $(ps aux | grep {container_name} | grep -v grep | awk '{{print $2}}')",
+                shell=True, check=False
+            )
+        # Finally, try removing again
+        # print(f'### Finally Trying again to remove container {container_name}...')
+        subprocess.run(['docker', 'rm', '-f', container_name], check=False)
+
 
 
 def bind(zone_file: pathlib.Path,
