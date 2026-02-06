@@ -194,6 +194,7 @@ print("Updated Batfish configurations")
 
 ## Run Batfish test
 new_df = run_batfish_example()
+print("\n@@@ Batfish Result DataFrame:")
 print(new_df)
 
 

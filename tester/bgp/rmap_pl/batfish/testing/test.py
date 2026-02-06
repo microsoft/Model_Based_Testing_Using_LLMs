@@ -42,6 +42,8 @@ def run_batfish_example(route):
     print("\nExecuted route policy test...")
 
     # Display the result
+    print("\n@@@ Batfish Result:")
+    print(result)
     result.to_json("output.json", orient="records", indent=2)
     with open(SNAPSHOT_DIR + "/configs/R2.cfg", "r") as f:
         config = f.read()

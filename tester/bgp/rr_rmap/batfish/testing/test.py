@@ -229,7 +229,7 @@ router3 = {
 
 write_config(route, rmap, router1, router2, router3)
 new_df = run_batfish_example()
-print("Batfish run completed. The results are:")
+print("\n@@@ Batfish Result:")
 new_df_dict = new_df.to_dict(orient="records")
 print(new_df_dict)
 with open("output_df.json", "w", encoding="utf-8") as f:

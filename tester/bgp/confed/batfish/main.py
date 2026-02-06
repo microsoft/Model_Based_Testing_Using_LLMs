@@ -36,6 +36,8 @@ current_dir = current_file.parent
 parser = argparse.ArgumentParser()
 parser.add_argument("--test_file_path", type=str, required=True,
                     help="Path to the test file")
+parser.add_argument("--start_id", type=int, default=0,
+                    help="Starting test ID (default: 0)")
 args = parser.parse_args()
 
 results_file = "results.json"
@@ -70,7 +72,7 @@ print("Results file created: results.json")
 ## Iterate through each test case
 print("Iterating over tests...")
 test_id = 0
-for test_id, test_case in enumerate(test_cases, start=1):
+for test_id, test_case in enumerate(test_cases, start=args.start_id):
     # populate testing/test.json
     print("****************************************\n")
     print_colored(f"\n\n@@@Running [Test Case {test_id} on Batfish] from {args.test_file_path}...\n\n", "yellow")
@@ -91,12 +93,12 @@ for test_id, test_case in enumerate(test_cases, start=1):
             timeout=30
         )
     except subprocess.TimeoutExpired:
-        print("❌ Batfish test timed out after 30 seconds.")
-        append_result(results_file, {"isRIB2": False, "aspath2": "", "isRIB3": False, "aspath3": ""})
+        print("@@@Batfish test timed out after 30 seconds. Saving timout result...")
+        append_result(results_file, {"test_id": test_id, "test_case": test_case, "result": {"isRIB2": False, "aspath2": "", "isRIB3": False, "aspath3": ""}})
         continue  # go to next test
     except subprocess.CalledProcessError as e:
-        print(f"❌ Batfish test failed: {e}")
-        append_result(results_file, {"isRIB2": False, "aspath2": "", "isRIB3": False, "aspath3": ""})
+        print(f"@@@Batfish test failed: {e}. Saving failure result...")
+        append_result(results_file, {"test_id": test_id, "test_case": test_case, "result": {"isRIB2": False, "aspath2": "", "isRIB3": False, "aspath3": ""}})
         continue
     print("Batfish test completed.")
 
@@ -104,7 +106,7 @@ for test_id, test_case in enumerate(test_cases, start=1):
     print("Saving test result...")
     with open("testing/result.json", "r") as f:
         result = json.load(f)
-    append_result(results_file, {"result": result})
+    append_result(results_file, {"test_id": test_id, "test_case": test_case, "result": result})
     print("Test result saved.")
 
 

@@ -9,6 +9,10 @@ neighbors:
   config:
     neighbor-address: 3.0.0.2
     peer-as: 200
+  route-reflector:
+    config:
+      route-reflector-client: true
+      route-reflector-cluster-id: 3.0.0.3
   transport:
     config:
       local-address: 3.0.0.3

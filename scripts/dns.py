@@ -72,7 +72,7 @@ def generate_zone_query_inputs_from_zone(zone_input: List[Tuple[List[dict], str]
             f.write(input[0])
 
 
-def cname_match_check(runs=12):
+def cname_match_check(runs, timeout):
     domain_name = ast.String(5)
     
     query_dn = ast.Parameter("domain_name", domain_name,description="The domain name to check")
@@ -107,7 +107,7 @@ def cname_match_check(runs=12):
     if NSDI:
         output_dir = output_dir_common / "CNAME"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             query_zone_tuples.append(create_cname_zone(input))
@@ -119,7 +119,7 @@ def cname_match_check(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     query_zone_tuples.append(create_cname_zone(input))
@@ -127,7 +127,7 @@ def cname_match_check(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def dname_match_check(runs=12):
+def dname_match_check(runs, timeout):
     domain_name = ast.String(5)
 
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -162,7 +162,7 @@ def dname_match_check(runs=12):
     if NSDI:
         output_dir = output_dir_common / "DNAME"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             query_zone_tuples.append(create_dname_zone(input))
@@ -174,7 +174,7 @@ def dname_match_check(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     query_zone_tuples.append(create_dname_zone(input))
@@ -182,7 +182,7 @@ def dname_match_check(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def ipv4_match_check(runs=12):
+def ipv4_match_check(runs, timeout):
     domain_name = ast.String(5)
 
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -217,7 +217,7 @@ def ipv4_match_check(runs=12):
     if NSDI:
         output_dir = output_dir_common / "IPv4"
         inputs = run(g, k=runs,
-                     debug=output_dir,  timeout_sec=300)
+                     debug=output_dir,  timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             query_zone_tuples.append(create_ipv4_zone(input))
@@ -229,7 +229,7 @@ def ipv4_match_check(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     query_zone_tuples.append(create_ipv4_zone(input))
@@ -316,7 +316,7 @@ def validate_domain_name():
             f.write(json.dumps(queries))
 
 
-def wildcard_match_check(runs=12):
+def wildcard_match_check(runs, timeout):
     domain_name = ast.String(5)
     
     query_dn = ast.Parameter("domain_name", domain_name, description="The domain name to check")
@@ -350,7 +350,7 @@ def wildcard_match_check(runs=12):
     if NSDI:
         output_dir = output_dir_common / "Wildcard"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             query_zone_tuples.append(create_wildcard_zone(input))
@@ -362,7 +362,7 @@ def wildcard_match_check(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     query_zone_tuples.append(create_wildcard_zone(input))
@@ -450,7 +450,7 @@ def create_zone(input: List) -> Tuple[List[dict], str]:
     return (zone_file, zone_origin)
 
 
-def valid_zone_check():
+def valid_zone_check(runs, timeout):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -486,14 +486,14 @@ def valid_zone_check():
     g.Pipe(is_valid_zone, all_valid_domain_names)
 
     output_dir = "ValidZone"
-    inputs = run(g, k=10, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
     query_zone_tuples = []
     for input in inputs:
         query_zone_tuples.append(create_zone(input))
     generate_zone_query_inputs_from_zone(query_zone_tuples, output_dir)
 
 
-def full_query_lookup(runs=12):
+def full_query_lookup(runs, timeout):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -550,7 +550,7 @@ def full_query_lookup(runs=12):
     if NSDI:
         output_dir = output_dir_common / "FullLookup"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             zone_file, zone_origin = create_zone(input)
@@ -571,7 +571,7 @@ def full_query_lookup(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     # print("Input:", input)
@@ -591,7 +591,7 @@ def full_query_lookup(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def return_code_lookup(runs=12):
+def return_code_lookup(runs, timeout):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -648,7 +648,7 @@ def return_code_lookup(runs=12):
     if NSDI:
         output_dir = output_dir_common / "RCODE"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             zone_file, zone_origin = create_zone(input)
@@ -669,7 +669,7 @@ def return_code_lookup(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     zone_file, zone_origin = create_zone(input)
@@ -687,7 +687,7 @@ def return_code_lookup(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def authoritative_lookup(runs=12):
+def authoritative_lookup(runs, timeout):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -746,7 +746,7 @@ def authoritative_lookup(runs=12):
     if NSDI:
         output_dir = output_dir_common / "Authoritative"
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             zone_file, zone_origin = create_zone(input)
@@ -767,7 +767,7 @@ def authoritative_lookup(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     zone_file, zone_origin = create_zone(input)
@@ -785,7 +785,7 @@ def authoritative_lookup(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def loop_count(runs=12):
+def loop_count(runs, timeout):
     domain_name = ast.String(3)
 
     record_type = ast.Enum(
@@ -847,7 +847,7 @@ def loop_count(runs=12):
         output_dir = output_dir_common / "LoopCount"
 
         inputs = run(g, k=runs,
-                     debug=output_dir, timeout_sec=300)
+                     debug=output_dir, timeout_sec=timeout)
         query_zone_tuples = []
         for input in inputs:
             zone_file, zone_origin = create_zone(input)
@@ -868,7 +868,7 @@ def loop_count(runs=12):
                 (output_dir / f"{temperature}" /
                  f"{i}").mkdir(exist_ok=True, parents=True)
                 inputs = run(g, k=runs,
-                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=300)
+                             debug=output_dir / f"{temperature}" / f"{i}", temperature_value=temperature, timeout_sec=timeout)
                 query_zone_tuples = []
                 for input in inputs:
                     zone_file, zone_origin = create_zone(input)
@@ -886,7 +886,7 @@ def loop_count(runs=12):
                     query_zone_tuples, (output_dir / f"{temperature}" / f"{i}"))
 
 
-def zonecut():
+def zonecut(runs, timeout):
     domain_name = ast.String(3)
     
     record_type = ast.Enum(
@@ -945,7 +945,7 @@ def zonecut():
     g.Pipe(dns_query_lookup_zonecut, is_valid_zone_query)
     
     output_dir = "Zonecut"
-    inputs = run(g, k=5, debug=output_dir)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
     query_zone_tuples = []
     for input in inputs:
         zone_file, zone_origin = create_zone(input)
@@ -980,23 +980,25 @@ if __name__ == "__main__":
                         help="Generate inputs for differential testing.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
+    parser.add_argument("--timeout", type=int, required=False,
+                        help="Timeout in seconds for each run.", default=300)
     args = parser.parse_args()
     NSDI = args.test
     if args.module == "cname":
-        cname_match_check(args.runs)
+        cname_match_check(args.runs, args.timeout)
     elif args.module == "dname":
-        dname_match_check(args.runs)
+        dname_match_check(args.runs, args.timeout)
     elif args.module == "wildcard":
-        wildcard_match_check(args.runs)
+        wildcard_match_check(args.runs, args.timeout)
     elif args.module == "ipv4":
-        ipv4_match_check(args.runs)
+        ipv4_match_check(args.runs, args.timeout)
     elif args.module == "full_lookup":
-        full_query_lookup(args.runs)
+        full_query_lookup(args.runs, args.timeout)
     elif args.module == "loop_count":
-        loop_count(args.runs)
+        loop_count(args.runs, args.timeout)
     elif args.module == "rcode":
-        return_code_lookup(args.runs)
+        return_code_lookup(args.runs, args.timeout)
     elif args.module == "authoritative":
-        authoritative_lookup(args.runs)
+        authoritative_lookup(args.runs, args.timeout)
     else:
         print("Invalid module selected.")

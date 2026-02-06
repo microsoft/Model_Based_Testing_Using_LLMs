@@ -399,6 +399,7 @@ def run_test(zoneid: str,
     prepare_containers(parent_directory_path / ZONE_FILES /
                        (zoneid + '.txt'), zone_domain, cid, False, implementations)
 
+    results = []
     differences = []
     for query in queries:
         qname = query["Name"]
@@ -426,6 +427,8 @@ def run_test(zoneid: str,
             for exp_res in exp_resps:
                 responses.append((exp_res["Server/s"],
                                   dns.message.from_text('\n'.join(exp_res["Response"]))))
+        results.append({"qname": qname, "qtype": qtype, "responses": [(impl, str(resp)) for impl, resp in responses]})
+
         groups = group_responses(responses)
         if len(groups) > 1:
             difference = {}
@@ -436,6 +439,13 @@ def run_test(zoneid: str,
     if differences:
         with open(parent_directory_path / DIFFERENCES / (zoneid + '.json'), 'w') as difference_fp:
             json.dump(differences, difference_fp, indent=2)
+
+    # if "Responses" dir does not exist, create it
+    if not (parent_directory_path / "Responses").exists():
+        (parent_directory_path / "Responses").mkdir(parents=True, exist_ok=True)
+    # Store all the query and responses in a json file
+    with open(parent_directory_path / "Responses" / (zoneid + '.json'), 'w') as all_res_fp:
+        json.dump(results, all_res_fp, indent=2)
 
 
 def run_tests(parent_directory_path: pathlib.Path,
@@ -495,9 +505,9 @@ def check_non_negative(value: str) -> int:
 if __name__ == '__main__':
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
                             description='Runs tests with valid zone files on different implementations.')
-    parser.add_argument('-path', metavar='DIRECTORY_PATH', default=SUPPRESS,
+    parser.add_argument('--path', metavar='DIRECTORY_PATH', default=SUPPRESS,
                         help='The path to the directory containing ZoneFiles and Queries')
-    parser.add_argument('-id', type=int, default=1, choices=range(1, 6),
+    parser.add_argument('--id', type=int, default=1, choices=range(1, 6),
                         help='Unique id for all the containers '
                         '(useful when running comparison in parallel).')
     parser.add_argument('-r', nargs=2, type=check_non_negative, metavar=('START', 'END'),

@@ -40,6 +40,7 @@ def build_docker_images(implementation: str, latest: bool, log_fp: TextIO) -> No
     :param latest: Whether to build the image using latest code.
     :param log_fp: Log file pointer.
     """
+    print(f'[*] Building image for {implementation}...')
     if latest:
         # implementation += ':latest'
         run_cmd = ['docker', 'build', '-t', implementation + ":latest", '-f',
@@ -52,13 +53,29 @@ def build_docker_images(implementation: str, latest: bool, log_fp: TextIO) -> No
     begin_time = time.time()
     if platform.system() == 'Linux':
         my_env = os.environ.copy()
-        my_env['DOCKER_BUILDKIT'] = '1'
-        cmd_output = subprocess.run(
-            run_cmd, env=my_env, stdout=subprocess.PIPE, check=True)
+        if 'DOCKER_BUILDKIT' not in my_env:
+            my_env['DOCKER_BUILDKIT'] = '0'
     else:
-        cmd_output = subprocess.run(
-            run_cmd, stdout=subprocess.PIPE, check=True)
-    if cmd_output.returncode != 0:
+        my_env = None
+
+    proc = subprocess.Popen(
+        run_cmd,
+        env=my_env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    if proc.stdout is not None:
+        for line in proc.stdout:
+            if line.startswith('DEPRECATED: The legacy builder is deprecated.'):
+                continue
+            if line.startswith('            BuildKit is currently disabled;'):
+                continue
+            if line.strip() == '':
+                continue
+            print(f'[{implementation}] {line}', end='')
+    returncode = proc.wait()
+    if returncode != 0:
         log_fp.write(
             f'{datetime.now()}\tError in building image for {implementation}.\n')
     else:

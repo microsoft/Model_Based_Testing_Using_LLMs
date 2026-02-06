@@ -2,6 +2,8 @@
 
 Download all the images from this [link](https://drive.google.com/drive/folders/1fEns5tyxdOZLbICibMnvN71Ucjl2tl89).
 
+Go to the directory where you downloaded the images and follow the terminal commands below to build the Docker images for each BGP implementation. 
+
 ### GoBGP
 ```bash
 $ unzip ksator_gobgp.zip
@@ -21,7 +23,7 @@ $ docker tag github_frr10 github/frr10
 ### ExaBGP
 ```bash
 $ unzip mikenowak_exabgp.zip
-$ mv mikenowak.tar.gz mikenowak_exabgp.tar
+$ mv mikenowak_exabgp.tar.gz mikenowak_exabgp.tar
 $ docker load -i mikenowak_exabgp.tar
 $ docker tag mikenowak_exabgp:latest mikenowak/exabgp:latest
 ```

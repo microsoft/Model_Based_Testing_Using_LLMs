@@ -24,7 +24,7 @@ def int_to_prefix(value: int, prefix_len: int) -> str:
     network = ipaddress.IPv4Network(f"{ip}/{prefix_len}", strict=False)
     return str(network)
 
-def confed_check(runs=10):
+def confed_check(runs, timeout):
     
     """
     
@@ -115,7 +115,7 @@ A few points to keep in mind:
     g.Pipe(confederation_model, valid_input_model)
     
     output_dir = output_dir_common / "CONFED"
-    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
 
     ## Save test cases
 
@@ -154,7 +154,7 @@ A few points to keep in mind:
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP confederation check.")
     
-def rr_check(runs=10):
+def rr_check(runs, timeout):
     """
     --------->------- R2 --------->-------
 
@@ -224,7 +224,7 @@ You have to take into consideration all BGP route reflector rules, eBGP, iBGP ru
     g.Pipe(rr_model, router_validity_model)
 
     output_dir = output_dir_common / "RR"
-    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
 
     ## Save test cases
     test_dir = output_dir
@@ -250,7 +250,7 @@ You have to take into consideration all BGP route reflector rules, eBGP, iBGP ru
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP route reflector check.")
 
-def rmap_pl_check(runs=10):
+def rmap_pl_check(runs, timeout):
     # Define a prefixListEntry struct with fields prefix, prefixLength, le, ge, any, permit
     pr_list_entry = ast.Struct(
         "PrefixListEntry",
@@ -378,7 +378,7 @@ If a match is found, the function should update the Result struct's isPermitted 
     g.Pipe(rmap_match_model, valid_input_model)
 
     output_dir = output_dir_common / "RMAP_PL"
-    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
     
     ## Save test cases
     test_dir = output_dir
@@ -419,7 +419,7 @@ If a match is found, the function should update the Result struct's isPermitted 
         json.dump(test_cases, f, indent=4)
     print(f"[DONE] Generated {len(test_cases)} test cases for BGP route map with single-entry prefix list.")
 
-def rr_rmap_check(runs=10):
+def rr_rmap_check(runs, timeout):
     """
     input parameters:
     1. inRRflag : 
@@ -626,7 +626,7 @@ If R2 receives the route, then before advertising it to other interfaces, it app
     g.Pipe(rr_model, input_validity_model)
 
     output_dir = output_dir_common / "RR_RMAP"
-    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
 
     ## Save test cases
     test_dir = output_dir
@@ -689,16 +689,18 @@ if __name__ == "__main__":
     #                     help="Generate NSDI inputs.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
+    parser.add_argument("--timeout", type=int, required=False,
+                        help="Timeout in seconds for each run.", default=300)
     args = parser.parse_args()
     # NSDI = args.nsdi
     if args.module == "confed":
-        confed_check(args.runs)
+        confed_check(args.runs, args.timeout)
     elif args.module == "rr":
-        rr_check(args.runs)
+        rr_check(args.runs, args.timeout)
     elif args.module == "rmap_pl":
-        rmap_pl_check(args.runs)
+        rmap_pl_check(args.runs, args.timeout)
     elif args.module == "rr_rmap":
-        rr_rmap_check(args.runs)
+        rr_rmap_check(args.runs, args.timeout)
     else:
         print("Invalid module selected.")
 

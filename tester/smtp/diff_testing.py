@@ -5,6 +5,7 @@ import json
 from tqdm import tqdm
 import socket
 import os
+import argparse
 
 # Configuration
 test_dir = "../../tests/smtp/NSDI/SMTP"
@@ -149,12 +150,18 @@ def get_smtp_response(server_address, port, total_command_seq):
 
 
 
-def run_smtp_tests(server_address, tests_file):
+def run_smtp_tests(server_address, tests_file, start=None, end=None):
     # Load test cases from the JSON file
     with open(tests_file, "r") as f:
         test_cases = json.load(f)
 
     print(f"[+] Loaded {len(test_cases)} test cases from {tests_file}")
+
+    # Filter tests by range if specified
+    if start is not None and end is not None:
+        test_cases = test_cases[start:end+1]
+        print(f"[+] Filtering to test cases {start} to {end} (inclusive, 0-indexed)")
+        print(f"[+] Running {len(test_cases)} test cases")
 
     # Create empty results file
     with open(results_json_path, "w") as f:
@@ -165,11 +172,13 @@ def run_smtp_tests(server_address, tests_file):
     # Loop through each test case
     results = []
     diff_results = []
-    for idx, test in enumerate(tqdm(test_cases, desc="Running SMTP tests"), start=1):
+    # Calculate starting index for test_id
+    start_idx = start if start is not None else 0
+    for idx, test in enumerate(tqdm(test_cases, desc="Running SMTP tests"), start=start_idx):
         total_command_seq = test["input_sequence"]
         expected_response = test["expected_response"]
 
-        print(f"[*] Test {idx}/{len(test_cases)}")
+        print(f"[*] Test {idx}/{start_idx + len(test_cases) - 1}")
 
         # Execute on all servers
         print("    - Testing smtpd...")
@@ -205,6 +214,15 @@ def run_smtp_tests(server_address, tests_file):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Run differential testing on SMTP implementations.')
+    parser.add_argument('-r', nargs=2, type=int, metavar=('START', 'END'),
+                        help='Range of test cases to run (START END, inclusive, 0-indexed). If not provided, all tests are run.')
+    args = parser.parse_args()
+
+    start = None
+    end = None
+    if args.r:
+        start, end = args.r[0], args.r[1]
 
     ## Start the servers
     aiosmtpd_process = subprocess.Popen(["python3", "server_aiosmtpd.py"])
@@ -218,7 +236,7 @@ if __name__ == "__main__":
     time.sleep(5)  # wait for the server to start
 
     ## Run the tests
-    run_smtp_tests(server_ip, test_file_path)
+    run_smtp_tests(server_ip, test_file_path, start=start, end=end)
 
     ## Terminate the servers
     aiosmtpd_process.terminate()

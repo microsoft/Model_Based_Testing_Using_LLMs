@@ -1,8 +1,6 @@
 defined-sets:
   prefix-sets:
-    prefix-list:
-    - ip-prefix: 100.10.1.0/24
-      masklength-range: 24..32
+    prefix-list: []
     prefix-set-name: ps1
 global:
   apply-policy:
@@ -19,11 +17,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
   config:
     neighbor-address: 3.0.0.3
-    peer-as: 200
-  route-reflector:
-    config:
-      route-reflector-client: true
-      route-reflector-cluster-id: 3.0.0.2
+    peer-as: 100
   transport:
     config:
       local-address: 3.0.0.2
@@ -32,11 +26,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
   config:
     neighbor-address: 4.0.0.3
-    peer-as: 200
-  route-reflector:
-    config:
-      route-reflector-client: true
-      route-reflector-cluster-id: 4.0.0.2
+    peer-as: 300
   transport:
     config:
       local-address: 4.0.0.2
@@ -44,7 +34,7 @@ policy-definitions:
 - name: example-policy
   statements:
   - actions:
-      route-disposition: accept-route
+      route-disposition: reject-route
     conditions:
       match-prefix-set:
         prefix-set: ps1

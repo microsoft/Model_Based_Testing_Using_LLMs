@@ -7,7 +7,7 @@ from sys import stdout
 from time import sleep
 
 messages = [
-    "announce route 100.10.1.0/24 next-hop self local-preference 200 med 20",
+    "announce route 64.0.0.0/2 next-hop self local-preference 100 med 20",
 ]
 
 sleep(5)

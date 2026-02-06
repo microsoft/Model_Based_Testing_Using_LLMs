@@ -1,6 +1,6 @@
 global:
   config:
-    as: 200
+    as: 300
     router-id: 4.0.0.3
 neighbors:
 - afi-safis:
@@ -9,6 +9,10 @@ neighbors:
   config:
     neighbor-address: 4.0.0.2
     peer-as: 200
+  route-reflector:
+    config:
+      route-reflector-client: true
+      route-reflector-cluster-id: 4.0.0.3
   transport:
     config:
       local-address: 4.0.0.3

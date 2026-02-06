@@ -58,7 +58,7 @@ def BFS(transition_dict, target_state):
     return None
 
 
-def server_check(runs=10):
+def server_check(runs, timeout):
     
     state = ast.Enum("State", ["INITIAL", "HELO_SENT", "EHLO_SENT", "MAIL_FROM_RECEIVED", "RCPT_TO_RECEIVED", "DATA_RECEIVED", "QUITTED"])
 
@@ -81,7 +81,7 @@ def server_check(runs=10):
     g.Node(smtp_server_model)
 
     output_dir = output_dir_common / "SMTP"
-    inputs = run(g, k=runs, debug=output_dir, timeout_sec=300)
+    inputs = run(g, k=runs, debug=output_dir, timeout_sec=timeout)
 
     ## Save the test cases
     test_dir = output_dir
@@ -104,7 +104,7 @@ def server_check(runs=10):
 
     ## Pick an implementation for state graph generation
     impl = pick_first_implementation(test_dir)
-    print(f"\n [x] Picked implementation: {impl} for state transition extraction \n")
+    print(f"\n [+] Picked implementation: {impl} for state transition extraction \n")
     with open(impl, 'r') as f:
         code = f.read()
 
@@ -182,9 +182,11 @@ if __name__ == "__main__":
     #                     help="Generate NSDI inputs.", default=False)
     parser.add_argument("-r", "--runs", type=int, required=False,
                         help="Number of runs to generate inputs for.", default=10)
+    parser.add_argument("--timeout", type=int, required=False,
+                        help="Timeout in seconds for each run.", default=300)
     args = parser.parse_args()
     # NSDI = args.nsdi
     if args.module == "server":
-        server_check(args.runs)
+        server_check(args.runs, args.timeout)
     else:
         print("Invalid module selected.")

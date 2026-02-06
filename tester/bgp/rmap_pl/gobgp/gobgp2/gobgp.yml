@@ -17,14 +17,14 @@ neighbors:
 defined-sets:
   prefix-sets:
     prefix-list:
-    - ip-prefix: 100.10.1.0/24
-      masklength-range: 24..32
+    - ip-prefix: 64.0.0.0/2
+      masklength-range: 2..4
     prefix-set-name: ps1
 policy-definitions:
 - name: example-policy
   statements:
   - actions:
-      route-disposition: accept-route
+      route-disposition: reject-route
     conditions:
       match-prefix-set:
         prefix-set: ps1

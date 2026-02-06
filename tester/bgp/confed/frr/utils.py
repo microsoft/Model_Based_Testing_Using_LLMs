@@ -38,10 +38,6 @@ def parse_rib(ribfile):
     with open(ribfile,"r") as f:
         lines = f.readlines()
 
-    print("@@@ FRR RIB File Contents:")
-    for line in lines:
-        print(line.strip())
-
     if lines[0].strip() == "% Network not in table":
         isRIB = False
         aspath = ""

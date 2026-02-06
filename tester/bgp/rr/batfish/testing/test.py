@@ -204,6 +204,7 @@ router3 = {
 
 write_config(router1, router2, router3)
 new_df = run_batfish_example()
+print("\n@@@ Batfish Result:")
 print(new_df)
 
 isReceivedR2 = False
