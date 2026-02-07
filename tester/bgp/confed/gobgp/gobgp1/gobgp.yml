@@ -1,16 +1,21 @@
 global:
   config:
     router-id: 192.168.255.1
-    as: 400
+    as: 257
   apply-policy:
     config:
       export-policy-list:
       - RM1
       default-export-policy: reject-route
+  confederation:
+    config:
+      enabled: true
+      identifier: 64512
+      member-as-list: []
 neighbors:
 - config:
     neighbor-address: 3.0.0.3
-    peer-as: 512
+    peer-as: 65533
   transport:
     config:
       local-address: 3.0.0.2
@@ -19,7 +24,7 @@ neighbors:
       afi-safi-name: ipv4-unicast
 - config:
     neighbor-address: 4.0.0.3
-    peer-as: 768
+    peer-as: 422
     remove-private-as: all
   transport:
     config:
@@ -34,4 +39,4 @@ policy-definitions:
     actions:
       route-disposition: accept-route
       bgp-actions:
-        set-local-pref: 50
+        set-local-pref: 150

@@ -34,9 +34,9 @@ def get_as_path(file):
     if len(rib_lines) == 0:
         return "Error: No output generated"
     
-    elif len(rib_lines) == 1:
-        if rib_lines[0].startswith("Network not in table") or rib_lines[0]=='':
-            return (False, "")
+    # Check first line for "Network not in table" regardless of trailing newlines
+    if rib_lines[0].startswith("Network not in table") or rib_lines[0] == '':
+        return (False, "")
     
     as_path_index = rib_lines[0].find('AS_PATH')
     age_index = rib_lines[0].find('Age')

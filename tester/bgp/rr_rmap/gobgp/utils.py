@@ -336,12 +336,14 @@ def parse_ple(ple):
 def parse_rib(ribfile):
     with open(ribfile,"r") as f:
         lines = f.readlines()
-    if (len(lines) == 1) and lines[0].startswith("Network not in table"):
+    if len(lines) == 0:
         return False
-    elif len(lines) == 1 and lines[0].startswith("Error: gobgp.yml file not generated") or len(lines) == 0:
+    # Check first line for "Network not in table" regardless of trailing newlines
+    if lines[0].startswith("Network not in table"):
         return False
-    else:
-        return True
+    if lines[0].startswith("Error: gobgp.yml file not generated"):
+        return False
+    return True
 
 
 def convert_prefix_to_uint(prefix):
