@@ -286,7 +286,15 @@ Results will be saved in the file: `../../tests/smtp/NSDI/SMTP/diff_results.json
 
 To reproduce similar graphs on the number of runs versus the number of unique tests, as provided in the appendix of the paper, navigate to the **scripts** directory and run the following commands:
 ```bash
-$ python3 dns.py -m cname -r 12
-$ python3 plot_graphs.py --model cname --runs 12
+$ python3 dns.py -m {model} -r {number of runs} --timeout {value}
+$ python3 plot_graphs.py --model {model} --runs {number of runs}
 ```
+
+**Quick Run**: For example, if you want to plot the graph for CNAME module with `2` runs and timeout of `10s`, then you must run the following commands:
+
+```bash
+$ python3 dns.py -m cname -r 2 --timeout 10
+$ python3 plot_graphs.py --model cname --runs 2
+```
+
 The available options for models are **cname**, **dname**, **ipv4** and **wildcard**.
