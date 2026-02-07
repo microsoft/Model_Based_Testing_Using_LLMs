@@ -79,8 +79,8 @@ neighbor 6.0.0.2 {{                 # Remote neighbor to peer with
 
 
 def update_frr2_config(r2_config, orig_as, r3_config, remove_private_as_2, replace_as_2, r2_lp):
-    remove_private_as_word = "remove-private-as all" if remove_private_as_2 else ""
-    replace_as_word = "replace-as" if replace_as_2 else ""
+    remove_private_as_word = "remove-private-AS all" if remove_private_as_2 else ""
+    replace_as_word = "replace-AS" if replace_as_2 else ""
     peer_as = 0
     confed_peer_line = ""
     if (r2_config["subAS"] != 0) and (r3_config["subAS"] != 0) and r2_config["asNumber"] == r3_config["asNumber"]:
@@ -97,7 +97,8 @@ def update_frr2_config(r2_config, orig_as, r3_config, remove_private_as_2, repla
 router bgp {router_id}  
   no bgp ebgp-requires-policy{confed_line}{confed_peer_line}
   neighbor 6.0.0.3 remote-as {orig_as}
-  neighbor 8.0.0.3 remote-as {peer_as} {remove_private_as_word} {replace_as_word}
+  neighbor 8.0.0.3 remote-as {peer_as} 
+  neighbor 8.0.0.3 {remove_private_as_word} {replace_as_word}
   neighbor 8.0.0.3 route-map SET_LOCAL_PREF out
 exit
 !

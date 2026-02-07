@@ -32,10 +32,11 @@ def diff_test(test_file, results_file, diff_results_file, start=None, end=None):
     # Build command suffix for start_id if specified
     start_id_arg = f" --start_id {start}" if start is not None else ""
 
-    # Start all three tests in parallel
+    # Start all four tests in parallel
     gobgp_proc = subprocess.run(f"cd gobgp && python main.py --test_file_path=../{filtered_test_file}{start_id_arg}", shell=True)
     frr_proc = subprocess.run(f"cd frr && python main.py --test_file_path=../{filtered_test_file}{start_id_arg}", shell=True)
     batfish_proc = subprocess.run(f"cd batfish && python main.py --test_file_path=../{filtered_test_file}{start_id_arg}", shell=True)
+    other_proc = subprocess.run(f"cd other && python main.py --test_file_path=../{filtered_test_file}{start_id_arg}", shell=True)
 
     # Wait for all to complete
     # frr_proc.wait()
@@ -51,14 +52,17 @@ def diff_test(test_file, results_file, diff_results_file, start=None, end=None):
         gobgp_results = json.load(f)
     with open(f"batfish/results.json", "r") as f:
         batfish_results = json.load(f)
+    with open("other/results.json", "r") as f:
+        other_results = json.load(f)
 
     # Convert results lists to dictionaries keyed by test_id
     frr_dict = {r["test_id"]: r for r in frr_results}
     gobgp_dict = {r["test_id"]: r for r in gobgp_results}
     batfish_dict = {r["test_id"]: r for r in batfish_results}
+    other_dict = {r["test_id"]: r for r in other_results}
 
     # Get test_ids that have results from ALL implementations
-    common_test_ids = set(frr_dict.keys()) & set(gobgp_dict.keys()) & set(batfish_dict.keys())
+    common_test_ids = set(frr_dict.keys()) & set(gobgp_dict.keys()) & set(batfish_dict.keys()) & set(other_dict.keys())
 
     # Build test_case lookup from original tests
     test_lookup = {}
@@ -72,6 +76,7 @@ def diff_test(test_file, results_file, diff_results_file, start=None, end=None):
         frr_res = frr_dict[test_id]
         gobgp_res = gobgp_dict[test_id]
         batfish_res = batfish_dict[test_id]
+        other_res = other_dict[test_id]
         
         d = {
             "test_id": test_id,
@@ -79,9 +84,10 @@ def diff_test(test_file, results_file, diff_results_file, start=None, end=None):
             "results":{
                 "FRR": frr_res["result"],
                 "GoBGP": gobgp_res["result"],
-                "Batfish": batfish_res["result"]
+                "Batfish": batfish_res["result"],
+                "Other": other_res["result"]
             },
-            "verdict": "PASS" if (frr_res["result"]["isRIB3"] == gobgp_res["result"]["isRIB3"] == batfish_res["result"]["isRIB3"]) else "FAIL"
+            "verdict": "PASS" if (frr_res["result"] == gobgp_res["result"] == batfish_res["result"] == other_res["result"]) else "FAIL"
         }
         results.append(d)
         if d["verdict"] == "FAIL":
