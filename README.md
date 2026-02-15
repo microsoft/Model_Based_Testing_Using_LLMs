@@ -239,7 +239,7 @@ $ python3 diff_testing.py
 ```bash
 $ python3 diff_testing.py -r 2 5
 ```
-This will run test cases from 2 to 5 (inclusive, and 0-indexed). If the `-r` flag is not provided, all test cases will be run.
+This will run test cases from 2 to 5 (inclusive, and 0-indexed). If the `-r` flag is not provided, all test cases will be run. (if prompted for sudo access, please provide it to make sure that the Docker containers can write the results without permission issues).
 
 Results will be saved in test directory i.e. `../../tests/bgp/NSDI/{model}`
 
